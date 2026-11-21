@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import type { Config } from "./config";
 import type { Db } from "./db/client";
@@ -24,6 +25,8 @@ export function createApp(deps: AppDeps) {
   const app = new Hono<AppEnv>();
   app.use("*", cors({ origin: deps.config.CORS_ORIGIN, allowMethods: ["GET", "POST", "PUT", "DELETE"], exposeHeaders: ["x-request-id", "retry-after"] }));
   app.use("*", requestContext(deps.log));
+  // Every request body here is a small JSON object; 64 KB leaves room for a long question.
+  app.use("*", bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: { code: "invalid_request", message: "The request is too large. Shorten the question and try again.", requestId: c.get("requestId") } }, 413) }));
   app.onError(handleError);
   app.notFound((c) => c.json({ error: { code: "not_found", message: "No such endpoint.", requestId: c.get("requestId") } }, 404));
   app.route("/", healthRoutes({ db: deps.db, providers: deps.providerNames }));

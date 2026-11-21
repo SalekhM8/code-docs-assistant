@@ -14,7 +14,9 @@ export type ErrorCode =
   | "provider_error"
   | "internal";
 
-const STATUS: Record<ErrorCode, number> = {
+type Status = 400 | 404 | 409 | 413 | 429 | 500 | 502;
+
+const STATUS: Record<ErrorCode, Status> = {
   invalid_request: 400,
   invalid_repo_url: 400,
   repo_not_found: 404,
@@ -37,7 +39,7 @@ export class AppError extends Error {
     super(message, options);
   }
 
-  get status(): number {
+  get status(): Status {
     return STATUS[this.code];
   }
 }

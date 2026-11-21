@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AnswerMode, ConversationDetail, Message } from "@cda/shared";
-import { type AnswerRequest, ApiError } from "@/lib/api";
+import { type AnswerRequest, api, ApiError } from "@/lib/api";
 import { type LiveAnswer, type OrbState, reduceLive, startLive } from "@/lib/live-answer";
 import { keys } from "@/lib/queries";
 import { streamAnswer } from "@/lib/stream-answer";
@@ -46,6 +46,26 @@ export function useAnswerStream(conversationId: string) {
     });
   }, [patch]);
 
+  /**
+   * Replaces the optimistic messages with the server's. After a Stop the server saves the
+   * partial answer only once it notices the closed connection, so a refetch can arrive first;
+   * retry briefly until the stored answer is there rather than dropping the stopped text.
+   */
+  const syncFromServer = useCallback(
+    async (stopped: boolean) => {
+      for (let attempt = 0; attempt < (stopped ? 6 : 1); attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 300));
+        const fresh = await api.conversation(conversationId).catch(() => null);
+        // Until the stopped answer is stored, keep showing the optimistic copy.
+        if (fresh && (!stopped || fresh.messages.at(-1)?.role === "assistant")) {
+          qc.setQueryData(key, fresh);
+          return;
+        }
+      }
+    },
+    [qc, key, conversationId],
+  );
+
   const run = useCallback(
     async (req: AnswerRequest, question: string, mode: AnswerMode) => {
       controller.current?.abort();
@@ -70,11 +90,11 @@ export function useAnswerStream(conversationId: string) {
         if (controller.current === ac) controller.current = null;
         commit(current, ac.signal.aborted);
         setLive(current.error ? current : null);
-        await qc.invalidateQueries({ queryKey: key });
+        await syncFromServer(ac.signal.aborted);
         await qc.invalidateQueries({ queryKey: ["conversations"] });
       }
     },
-    [qc, key, commit],
+    [qc, commit, syncFromServer],
   );
 
   const ask = useCallback(

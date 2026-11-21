@@ -31,7 +31,7 @@ export class FakeLlm implements LlmProvider {
   readonly turnRequests: TurnRequest[] = [];
   readonly completeRequests: CompleteRequest[] = [];
 
-  constructor(private readonly behaviour: FakeBehaviour = {}) {}
+  constructor(private readonly behaviour: FakeBehaviour = {}, private readonly delayMs = 0) {}
 
   modelFor(tier: ModelTier): string {
     return `fake-${tier}`;
@@ -49,7 +49,7 @@ export class FakeLlm implements LlmProvider {
     const text = script.text ?? "";
     for (const delta of text.match(/\S+\s*/g) ?? []) {
       // Yield between deltas so a Stop click (abort) can land mid answer, as with a real stream.
-      await new Promise((r) => setImmediate(r));
+      await new Promise((r) => (this.delayMs ? setTimeout(r, this.delayMs) : setImmediate(r)));
       signal?.throwIfAborted();
       onText(delta);
     }

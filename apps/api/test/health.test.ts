@@ -27,3 +27,11 @@ describe("GET /health", () => {
     expect(res.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
+
+describe("request limits", () => {
+  it("rejects oversized bodies with a clear message", async () => {
+    const res = await t.app.request("/repos", { method: "POST", body: JSON.stringify({ url: "x".repeat(70_000) }), headers: { "content-type": "application/json", "content-length": "70011" } });
+    expect(res.status).toBe(413);
+    expect(await res.text()).toContain("too large");
+  });
+});
