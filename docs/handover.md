@@ -255,7 +255,7 @@ apps/web/src/components
 - `components/code/highlight.ts`: lazy shiki tokenising.
 - `components/ui/*`: shadcn/ui primitives (button, input, textarea, sheet, tooltip), restyled through the theme.
 
-## Ten places a reviewer will ask about
+## Places a reviewer will ask about
 
 1. **`agent/citations.ts` and `agent/finalize.ts`: the citation guardrail.**
    - A citation is valid only if the file is in this index version, the lines exist, and the range overlaps something the run actually retrieved or read (`agent/evidence.ts`).
@@ -296,6 +296,9 @@ apps/web/src/components
     - Retrieval metrics are pure code with no model calls, and run in CI with a floor.
     - Answer metrics run both modes through the real pipeline: file recall and MRR from trace refs, citation validity from the checker, and correctness and faithfulness from a judge that sees only the cited code.
     - Cost and latency come from traces. Known weakness: the judge is the same model family, and the golden set is unreviewed.
+
+11. **`apps/web/src/lib/floor.ts`: why rooms are folders on some repos and roles on others.**
+   Rooms are meant to tell you where the assistant is looking. On a repo with structure (commander.js: `lib/`, `tests/`, `docs/`, `examples/`) one room per top-level folder does that, because the folders already say what the code is. On a flat package (slugify: everything at the root plus `.github`) folder rooms collapse into "Root files" holding all the code and "Everything else" holding two CI files, so a walk between them says nothing. Below three visible folders the floor groups by role (Source, Tests, Docs, Config) from the file path. It is a path heuristic, deliberately: it only decides which room lights up, never what the answer says, and it needs no extra indexing. The catch-all room is named after its folder when it holds one (`.github/`).
 
 ## Decisions from the AI log
 

@@ -3,7 +3,7 @@ import type { OrbState } from "./live-answer";
 
 /*
  * The 3D stage is the White House floor view. On the home page each repo is a room;
- * inside a repo each top-level folder is a room. A room's state only ever comes from
+ * inside a repo each top-level folder is a room (or, for flat repos, each role). A room's state only ever comes from
  * real system state: indexing jobs, the live answer's steps, and the last answer's citations.
  */
 
@@ -36,15 +36,37 @@ export interface Folder {
 const colorAt = (i: number) => ROOM_COLORS[i % ROOM_COLORS.length] ?? "#2F8FE8";
 
 /**
- * Groups files by top-level folder, biggest first. Files at the root share one room. Hidden
- * folders (.github and the like) and anything past the cap share "Everything else".
+ * A repo with fewer top-level folders than this is grouped by role instead (see `rolesOf`):
+ * a flat package (everything at the root, plus .github) would otherwise be one big
+ * "Root files" room and a room of CI config, and the assistant walking between them says nothing.
+ */
+export const MIN_FOLDERS_FOR_FOLDER_ROOMS = 3;
+
+/**
+ * The rooms inside a repo. Repos with real structure get one room per top-level folder, so
+ * the floor mirrors the repo. Flat repos get one room per role (Source, Tests, Docs, Config),
+ * so a walk to "Tests" still means something.
  */
 export function foldersOf(paths: string[]): Folder[] {
+  const visible = new Set(paths.map(topFolder).filter((f): f is string => f !== null && !f.startsWith(".")));
+  return visible.size >= MIN_FOLDERS_FOR_FOLDER_ROOMS ? byFolder(paths) : rolesOf(paths);
+}
+
+function topFolder(path: string): string | null {
+  const slash = path.indexOf("/");
+  return slash === -1 ? null : path.slice(0, slash);
+}
+
+/**
+ * One room per top-level folder, biggest first; files at the root share one room. Hidden
+ * folders and anything past the cap share a catch-all, named after its folder when it holds
+ * only one (".github/"), else "Everything else".
+ */
+function byFolder(paths: string[]): Folder[] {
   const groups = new Map<string, string[]>();
   const hidden: string[] = [];
   for (const p of paths) {
-    const slash = p.indexOf("/");
-    const key = slash === -1 ? ROOT_ROOM : p.slice(0, slash);
+    const key = topFolder(p) ?? ROOT_ROOM;
     if (key.startsWith(".")) hidden.push(p);
     else groups.set(key, [...(groups.get(key) ?? []), p]);
   }
@@ -53,15 +75,50 @@ export function foldersOf(paths: string[]): Folder[] {
   const fits = sorted.length + (hidden.length ? 1 : 0) <= MAX_ROOMS;
   const kept = fits ? sorted : sorted.slice(0, MAX_ROOMS - 1);
   const rest = [...(fits ? [] : sorted.slice(MAX_ROOMS - 1).flatMap(([, files]) => files)), ...hidden];
-  return [...kept.map(([id, files]) => named(id, files)), ...(rest.length ? [{ id: OTHER_ROOM, name: "Everything else", files: rest }] : [])];
+  return [...kept.map(([id, files]) => named(id, files)), ...(rest.length ? [{ id: OTHER_ROOM, name: catchAllName(rest), files: rest }] : [])];
 }
 
-/** Which room a repo path belongs to. */
+function catchAllName(files: string[]): string {
+  const tops = new Set(files.map((f) => topFolder(f) ?? ROOT_ROOM));
+  const [only] = tops;
+  return tops.size === 1 && only && only !== ROOT_ROOM ? `${only}/` : "Everything else";
+}
+
+type Role = "source" | "tests" | "docs" | "config";
+const ROLE_NAME: Record<Role, string> = { source: "Source", tests: "Tests", docs: "Docs", config: "Config" };
+const ROLE_ORDER: Role[] = ["source", "tests", "docs", "config"];
+
+/** What a file is for, from its path alone. Anything not recognised as tests, docs or config is source. */
+export function roleOf(path: string): Role {
+  const lower = path.toLowerCase();
+  const name = lower.slice(lower.lastIndexOf("/") + 1);
+  if (/(^|\/)(tests?|__tests__|specs?)\//.test(lower) || /(^test\.|[._-](test|spec)\.)/.test(name)) return "tests";
+  if (/(^|\/)docs?\//.test(lower) || /\.(md|mdx|rst|txt|adoc)$/.test(name) || /^(license|licence|changelog|authors)/.test(name)) return "docs";
+  if (lower.startsWith(".") || /(^|\/)\./.test(lower) || /\.(json|ya?ml|toml|ini|lock|cfg)$/.test(name) || /(^|[.-])config\./.test(name) || /^(makefile|dockerfile)/.test(name)) return "config";
+  return "source";
+}
+
+/** One room per role that has files, in a fixed order so the floor reads the same on every flat repo. */
+function rolesOf(paths: string[]): Folder[] {
+  const groups = new Map<Role, string[]>();
+  for (const p of paths) groups.set(roleOf(p), [...(groups.get(roleOf(p)) ?? []), p]);
+  return ROLE_ORDER.flatMap((role) => {
+    const files = groups.get(role);
+    return files ? [{ id: role, name: ROLE_NAME[role], files }] : [];
+  });
+}
+
+/** True when the rooms are roles (a flat repo) rather than top-level folders. */
+export function isRoleLayout(folders: Folder[]): boolean {
+  return folders.length > 0 && folders.every((f) => f.id in ROLE_NAME);
+}
+
+/** Which room a repo path belongs to: the room holding that file, or for a folder path, the room holding files under it. */
 export function roomOfPath(path: string, folders: Folder[]): string | null {
-  const slash = path.indexOf("/");
-  const key = slash === -1 ? ROOT_ROOM : path.slice(0, slash);
-  if (folders.some((f) => f.id === key)) return key;
-  return folders.some((f) => f.id === OTHER_ROOM) ? OTHER_ROOM : null;
+  const exact = folders.find((f) => f.files.includes(path));
+  if (exact) return exact.id;
+  const prefix = `${path.replace(/\/+$/, "")}/`;
+  return folders.find((f) => f.files.some((file) => file.startsWith(prefix)))?.id ?? null;
 }
 
 /** What the assistant is doing right now, or what its last answer cited. Published by the open conversation. */
