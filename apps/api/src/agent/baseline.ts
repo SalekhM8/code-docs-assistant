@@ -26,7 +26,6 @@ export async function runBaseline(ctx: RunContext): Promise<RunResult> {
   ctx.onStep({ id: "search-1", kind: "search", label: ctx.question, detail: `${results.length} results`, done: true });
   if (results.length === 0) return { text: "", model: ctx.llm.modelFor("answer"), stopReason: "no_evidence" };
 
-  ctx.onState("answering");
   const turn = await modelTurn(ctx, "answer", {
     tier: "answer",
     maxTokens: 16_000,

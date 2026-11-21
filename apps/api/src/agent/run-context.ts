@@ -21,6 +21,8 @@ export interface RunContext {
   onState(state: AssistantState): void;
   onStep(step: LiveStep): void;
   onText(delta: string): void;
+  /** Discards text streamed so far (narration before tool calls). */
+  onReset(): void;
 }
 
 /** What a mode returns. `text` is the final answer text, already streamed through onText. */
@@ -34,7 +36,14 @@ export interface RunResult {
 export async function modelTurn(ctx: RunContext, name: string, req: Omit<TurnRequest, "system">): Promise<TurnResult> {
   const startedAt = new Date();
   const t0 = performance.now();
-  const turn = await ctx.llm.streamTurn({ ...req, system: ctx.system }, ctx.onText, ctx.signal);
+  let started = false;
+  const onText = (delta: string) => {
+    // The orb switches to "answering" when words actually arrive, not when the call starts.
+    if (!started) ctx.onState("answering");
+    started = true;
+    ctx.onText(delta);
+  };
+  const turn = await ctx.llm.streamTurn({ ...req, system: ctx.system }, onText, ctx.signal);
   ctx.trace.model(name, turn.model, turn.usage, {
     stopReason: turn.stopReason,
     toolCalls: turn.toolCalls.map((c) => c.name),

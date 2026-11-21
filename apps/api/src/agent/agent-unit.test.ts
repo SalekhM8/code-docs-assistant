@@ -52,7 +52,7 @@ describe("runBaseline with no search results", () => {
     const ctx = {
       db: undefined as never, llm, search: async () => [], versionId: "v", question: "Where is X?", history: [], system: [],
       evidence: new Evidence(), trace: new TraceRecorder(), signal: new AbortController().signal, limits: { maxSteps: 6, maxTokens: 1000 },
-      onState: () => undefined, onStep: () => undefined, onText: () => undefined,
+      onState: () => undefined, onStep: () => undefined, onText: () => undefined, onReset: () => undefined,
     };
     const result = await runBaseline(ctx);
     expect(llm.turnRequests).toHaveLength(0);

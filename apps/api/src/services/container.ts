@@ -1,4 +1,5 @@
 import { runBaseline } from "../agent/baseline";
+import { runAgent } from "../agent/loop";
 import type { Config } from "../config";
 import type { Db } from "../db/client";
 import { CodeChunker } from "../indexing/chunkers/code";
@@ -10,12 +11,13 @@ import { createHybridSearch } from "../retrieval/hybrid";
 import { AnswerService } from "./answer";
 import { ConversationService } from "./conversations";
 import { IndexRunner } from "./index-runner";
+import { createLangfuseExporter } from "./langfuse";
 import { RepoService } from "./repos";
 
 export type ServiceConfig = Pick<
   Config,
   "MAX_REPO_SIZE_MB" | "MAX_FILE_COUNT" | "MAX_FILE_BYTES" | "ANSWER_MODE" | "MAX_AGENT_STEPS" | "MAX_TOKENS_PER_ANSWER"
->;
+> & Partial<Pick<Config, "LANGFUSE_PUBLIC_KEY" | "LANGFUSE_SECRET_KEY" | "LANGFUSE_HOST">>;
 
 export interface ServiceDeps {
   config: ServiceConfig;
@@ -58,9 +60,10 @@ export async function createServices(deps: ServiceDeps): Promise<Services> {
     repos,
     conversations,
     log,
-    modes: { baseline: runBaseline, agent: runBaseline },
+    modes: { baseline: runBaseline, agent: runAgent },
     defaultMode: config.ANSWER_MODE,
     limits: { maxSteps: config.MAX_AGENT_STEPS, maxTokens: config.MAX_TOKENS_PER_ANSWER },
+    onTrace: createLangfuseExporter({ LANGFUSE_HOST: "https://cloud.langfuse.com", ...config }, db, log),
   });
   return { runner, repos, conversations, answers };
 }
