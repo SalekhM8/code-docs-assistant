@@ -10,10 +10,15 @@ export function numberLines(content: string, firstLine: number): string {
     .join("\n");
 }
 
+/** `path:start-end`, the form used in citations, trace steps and eval scoring. */
+export function refOf(r: { path: string; startLine: number; endLine: number }): string {
+  return `${r.path}:${r.startLine}-${r.endLine}`;
+}
+
 /** The header format is the one the model is told to cite: path:start-end. */
 export function formatChunk(chunk: RetrievedChunk): string {
   const symbol = chunk.symbol ? ` (${chunk.symbol})` : "";
-  return `### ${chunk.path}:${chunk.startLine}-${chunk.endLine}${symbol}\n${numberLines(chunk.content, chunk.startLine)}`;
+  return `### ${refOf(chunk)}${symbol}\n${numberLines(chunk.content, chunk.startLine)}`;
 }
 
 export function formatSearchResults(query: string, chunks: RetrievedChunk[]): string {

@@ -19,3 +19,34 @@ jobs:
       - run: pnpm typecheck
       # Integration tests start a pgvector container through Testcontainers (Docker is on the runner).
       - run: pnpm test
+
+  # Retrieval metrics on the golden set, with the deterministic fake embedder (no keys in CI).
+  # Clones the pinned sample repo, indexes it, and fails if hybrid Recall@10 drops below the floor.
+  retrieval-eval:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cda
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/cda
+      LLM_PROVIDER: fake
+      EMBEDDING_PROVIDER: fake
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm eval --retrieval-only --min-recall=0.6
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: docs/eval-results.md

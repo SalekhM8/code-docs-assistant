@@ -75,16 +75,21 @@ export async function insertFileWithChunks(db: Db, versionId: string, file: Sour
         versionId, fileId: row.id, path: file.path, startLine: c.startLine, endLine: c.endLine, symbol: c.symbol,
         kind: c.kind, language: file.lang.language, content: c.content, contentHash: c.contentHash,
         embedding: c.embedding, embeddingModel,
-        searchVector: sql`to_tsvector('simple', ${searchText(file.path, c)})`,
+        searchVector: searchVector(file.path, c),
       })),
     );
   });
 }
 
-/** Keyword index text: path, symbol and content, with identifiers also split into words. */
-export function searchText(filePath: string, chunk: Pick<Chunk, "symbol" | "content">): string {
-  const raw = [filePath, chunk.symbol ?? "", chunk.content].join("\n");
-  return `${raw}\n${identifierWords(raw).join(" ")}`;
+/** Words for the keyword index, with identifiers also split (`parseOptions` -> parse, options). */
+export function searchWords(text: string): string {
+  return `${text}\n${identifierWords(text).join(" ")}`;
+}
+
+/** Path and symbol are weighted A and the body D, so a match on a name outranks a passing mention. */
+function searchVector(filePath: string, chunk: Pick<Chunk, "symbol" | "content">) {
+  const head = searchWords(`${filePath} ${chunk.symbol ?? ""}`);
+  return sql`setweight(to_tsvector('simple', ${head}), 'A') || setweight(to_tsvector('simple', ${searchWords(chunk.content)}), 'D')`;
 }
 
 /**
