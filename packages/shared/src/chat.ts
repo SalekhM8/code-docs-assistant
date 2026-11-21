@@ -76,6 +76,8 @@ export const StreamEvent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("status"), state: AssistantState }),
   z.object({ type: z.literal("step"), step: LiveStep }),
   z.object({ type: z.literal("text"), delta: z.string() }),
+  /** Text streamed so far was narration before tool calls, not the answer: clear it. */
+  z.object({ type: z.literal("reset") }),
   z.object({ type: z.literal("done"), message: Message }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]);

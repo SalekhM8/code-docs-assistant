@@ -68,9 +68,15 @@ export class AnswerService {
 
     const { turns, summary } = await this.deps.conversations.history(conversationId, question.id);
     let streamed = "";
-    const ctx = this.context(ready, question.content, mode, historyMessages(turns, summary), emit, signal, (delta) => {
-      streamed += delta;
-      emit({ type: "text", delta });
+    const ctx = this.context(ready, question.content, mode, historyMessages(turns, summary), emit, signal, {
+      onText: (delta) => {
+        streamed += delta;
+        emit({ type: "text", delta });
+      },
+      onReset: () => {
+        streamed = "";
+        emit({ type: "reset" });
+      },
     });
 
     const final = await this.execute(ctx, mode, () => streamed, log);
@@ -109,7 +115,7 @@ export class AnswerService {
     history: RunContext["history"],
     emit: Emit,
     signal: AbortSignal,
-    onText: (delta: string) => void,
+    text: Pick<RunContext, "onText" | "onReset">,
   ): RunContext {
     const repoName = `${ready.repo.owner}/${ready.repo.name}`;
     return {
@@ -130,7 +136,7 @@ export class AnswerService {
       limits: this.deps.limits,
       onState: (state) => emit({ type: "status", state }),
       onStep: (step) => emit({ type: "step", step }),
-      onText,
+      ...text,
     };
   }
 
