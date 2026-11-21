@@ -18,3 +18,11 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - ASSUMED: the GitHub REST API (unauthenticated, optional `GITHUB_TOKEN`) is called once per add to enforce public-only and the size limit before cloning. Clones disable symlinks and allow only https.
 - ASSUMED: the fake embedder is feature-hashed bag of identifier words, so key-less runs and tests still get meaningful vector similarity.
 - ASSUMED: adding a URL that already exists returns that repo (and retries it if its last attempt failed) rather than an error.
+- CHANGED: the citation checker (listed under phase 5) was built in phase 3, because the phase 3 "not found" behaviour and "no evidence means no answer" depend on it.
+- CHANGED: prompt order. The brief says rules, tool definitions, overview, conversation; the Anthropic API always renders tools before system, so the cached prefix is tools, rules, overview, then conversation. Both system blocks carry a cache breakpoint.
+- ASSUMED: "no evidence means no answer" is enforced in code. An empty retrieval skips the model call, and a `NOT_FOUND:` reply or an answer with zero valid citations is stored with status `not_found` and replaced by a plain statement. The searches made are kept on the message.
+- ASSUMED: retrieved chunks are shown to the model with line numbers (`41| code`) so it can cite exact ranges.
+- ASSUMED: for baseline follow-ups of eight words or fewer, the previous question is added to the retrieval query; the agent mode handles follow-ups itself.
+- ASSUMED: the conversation title and rolling summary are made by the cheap model after an answer finishes, so they never delay the first streamed words. The last six turns are sent in full.
+- ASSUMED: the Sonnet answer tier uses effort `medium` and server-side refusal fallbacks (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`); the Haiku cheap tier uses effort `low`. Thinking is left at the model default (adaptive).
+- ASSUMED: rate limiting is in memory, per client address, one-minute fixed windows, applied to add-repo and answer calls only.

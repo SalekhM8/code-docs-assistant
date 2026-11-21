@@ -1,3 +1,4 @@
+import { runBaseline } from "../agent/baseline";
 import type { Config } from "../config";
 import type { Db } from "../db/client";
 import { CodeChunker } from "../indexing/chunkers/code";
@@ -5,10 +6,16 @@ import type { Cloner } from "../indexing/clone";
 import type { GitHubClient } from "../indexing/github";
 import type { Logger } from "../lib/logger";
 import type { Providers } from "../providers";
+import { createHybridSearch } from "../retrieval/hybrid";
+import { AnswerService } from "./answer";
+import { ConversationService } from "./conversations";
 import { IndexRunner } from "./index-runner";
 import { RepoService } from "./repos";
 
-export type ServiceConfig = Pick<Config, "MAX_REPO_SIZE_MB" | "MAX_FILE_COUNT" | "MAX_FILE_BYTES">;
+export type ServiceConfig = Pick<
+  Config,
+  "MAX_REPO_SIZE_MB" | "MAX_FILE_COUNT" | "MAX_FILE_BYTES" | "ANSWER_MODE" | "MAX_AGENT_STEPS" | "MAX_TOKENS_PER_ANSWER"
+>;
 
 export interface ServiceDeps {
   config: ServiceConfig;
@@ -22,23 +29,38 @@ export interface ServiceDeps {
 export interface Services {
   runner: IndexRunner;
   repos: RepoService;
+  conversations: ConversationService;
+  answers: AnswerService;
 }
 
 /** The one composition root. main.ts passes real clients; tests pass fakes. */
 export async function createServices(deps: ServiceDeps): Promise<Services> {
+  const { db, log, providers, config } = deps;
   const runner = new IndexRunner({
-    db: deps.db,
-    embeddings: deps.providers.embeddings,
-    llm: deps.providers.llm,
+    db,
+    embeddings: providers.embeddings,
+    llm: providers.llm,
     cloner: deps.cloner,
     chunker: await CodeChunker.create(),
-    log: deps.log,
+    log,
     limits: {
-      maxFileBytes: deps.config.MAX_FILE_BYTES,
-      maxFileCount: deps.config.MAX_FILE_COUNT,
-      maxTotalBytes: deps.config.MAX_REPO_SIZE_MB * 1024 * 1024,
+      maxFileBytes: config.MAX_FILE_BYTES,
+      maxFileCount: config.MAX_FILE_COUNT,
+      maxTotalBytes: config.MAX_REPO_SIZE_MB * 1024 * 1024,
     },
   });
-  const repos = new RepoService({ db: deps.db, github: deps.github, runner, maxRepoSizeMb: deps.config.MAX_REPO_SIZE_MB });
-  return { runner, repos };
+  const repos = new RepoService({ db, github: deps.github, runner, maxRepoSizeMb: config.MAX_REPO_SIZE_MB });
+  const conversations = new ConversationService({ db, llm: providers.llm, log });
+  const answers = new AnswerService({
+    db,
+    llm: providers.llm,
+    search: createHybridSearch(db, providers.embeddings),
+    repos,
+    conversations,
+    log,
+    modes: { baseline: runBaseline, agent: runBaseline },
+    defaultMode: config.ANSWER_MODE,
+    limits: { maxSteps: config.MAX_AGENT_STEPS, maxTokens: config.MAX_TOKENS_PER_ANSWER },
+  });
+  return { runner, repos, conversations, answers };
 }

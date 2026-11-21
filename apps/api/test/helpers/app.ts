@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { StreamEvent } from "@cda/shared";
 import { createApp } from "../../src/app";
 import type { Db } from "../../src/db/client";
 import type { Cloner } from "../../src/indexing/clone";
@@ -68,17 +69,49 @@ export interface TestApp {
   github: FakeGitHub;
 }
 
-export async function buildTestApp(db: Db, options: { llm?: FakeLlm } = {}): Promise<TestApp> {
+export async function buildTestApp(db: Db, options: { llm?: FakeLlm; mode?: "baseline" | "agent"; rateLimit?: number } = {}): Promise<TestApp> {
   const log = createLogger("silent");
   const providers = { llm: options.llm ?? new FakeLlm(), embeddings: new CountingEmbeddings() };
   const cloner = await FixtureCloner.fromFixture();
   const github = new FakeGitHub();
-  const config = { MAX_REPO_SIZE_MB: 50, MAX_FILE_COUNT: 500, MAX_FILE_BYTES: 200_000 };
+  const config = {
+    MAX_REPO_SIZE_MB: 50, MAX_FILE_COUNT: 500, MAX_FILE_BYTES: 200_000,
+    ANSWER_MODE: options.mode ?? ("baseline" as const), MAX_AGENT_STEPS: 6, MAX_TOKENS_PER_ANSWER: 100_000,
+  };
   const services = await createServices({ config, db, log, providers, cloner, github });
-  const app = createApp({ config: { CORS_ORIGIN: "http://localhost:3000" }, db, log, providerNames: { llm: "fake", embeddings: "fake" }, services });
+  const app = createApp({ config: { CORS_ORIGIN: "http://localhost:3000", RATE_LIMIT_PER_MINUTE: options.rateLimit ?? 1000 }, db, log, providerNames: { llm: "fake", embeddings: "fake" }, services });
   return { app, services, providers, cloner, github };
 }
 
 export async function json<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
+}
+
+/** Reads a whole SSE response into parsed events. */
+export async function readEvents(res: Response): Promise<StreamEvent[]> {
+  return parseSse(await res.text());
+}
+
+export function parseSse(text: string): StreamEvent[] {
+  return text
+    .split("\n\n")
+    .map((block) => block.split("\n").find((l) => l.startsWith("data: ")))
+    .filter((l): l is string => Boolean(l))
+    .map((l) => StreamEvent.parse(JSON.parse(l.slice(6))));
+}
+
+export async function indexFixture(t: TestApp): Promise<string> {
+  const res = await t.app.request("/repos", { method: "POST", body: JSON.stringify({ url: FIXTURE_URL }) });
+  const repo = (await res.json()) as { id: string };
+  await t.services.runner.idle();
+  return repo.id;
+}
+
+export async function newConversation(t: TestApp, repoId: string): Promise<string> {
+  const res = await t.app.request(`/repos/${repoId}/conversations`, { method: "POST" });
+  return ((await res.json()) as { id: string }).id;
+}
+
+export function ask(t: TestApp, conversationId: string, content: string, init: RequestInit = {}): Promise<Response> {
+  return Promise.resolve(t.app.request(`/conversations/${conversationId}/messages`, { method: "POST", body: JSON.stringify({ content }), ...init }));
 }
