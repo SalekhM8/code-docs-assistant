@@ -11,7 +11,7 @@ export function ApiStatus() {
     ? "Cannot reach the api. Start it with `docker compose up` (or `pnpm dev`), then this page will reconnect."
     : "The api is up but cannot reach its database. Check that Postgres is running.";
   return (
-    <div role="alert" className="border-b-[1.5px] border-red bg-red-tint px-4 py-2 text-[13px] text-red-text">
+    <div role="alert" className="absolute left-1/2 top-24 z-40 w-max max-w-[92%] -translate-x-1/2 rounded-full border-[1.5px] border-red bg-red-tint px-5 py-3 text-[13.5px] font-medium text-red-text shadow-card xl:top-20">
       {message}
     </div>
   );

@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
-import { ArrowUp, Square } from "lucide-react";
 import type { AnswerMode } from "@cda/shared";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface Props {
   mode: AnswerMode;
@@ -16,8 +15,8 @@ interface Props {
   placeholder?: string;
 }
 
-/** Enter sends, Shift+Enter adds a line, Escape stops. Typing stays possible while an answer streams. */
-export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy = false, placeholder = "Ask a question about the code…" }: Props) {
+/** The house's ask box: a cream pill and a dark Ask button. Enter sends, Shift+Enter adds a line, Escape stops. */
+export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy = false, placeholder = "Ask how something in the code works" }: Props) {
   const [text, setText] = useState("");
   const canSend = text.trim().length > 0 && !streaming && !busy;
 
@@ -38,8 +37,9 @@ export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy =
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-end gap-2 rounded-[24px] border-[1.5px] border-line-strong bg-surface-2 p-1.5 pl-4 focus-within:border-text">
+    <div>
+      <div className="flex items-end gap-2">
+        {/* 16px: anything smaller makes iPhones zoom the page when the box is tapped */}
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -47,24 +47,23 @@ export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy =
           placeholder={placeholder}
           aria-label="Question"
           rows={1}
-          className="max-h-48 min-h-10 flex-1 resize-none border-0 bg-transparent px-0 py-2 text-[16px] shadow-none focus-visible:ring-0"
+          className="max-h-40 min-h-12 flex-1 resize-none rounded-[24px] border-[1.5px] border-line-strong bg-surface-2 px-4 py-[11px] text-[16px] leading-[1.45] shadow-none focus-visible:border-text focus-visible:ring-2 focus-visible:ring-text"
         />
         {streaming ? (
-          <Button size="icon" className="size-10" onClick={onStop} aria-label="Stop the answer (Escape)" title="Stop (Escape)">
-            <Square className="fill-current" />
-          </Button>
+          <button type="button" onClick={onStop} className="min-h-12 shrink-0 rounded-full bg-text px-5 text-[14px] font-semibold text-surface" title="Stop (Escape)" aria-label="Stop the answer (Escape)">
+            Stop
+          </button>
         ) : (
-          <Button size="icon" className="size-10" onClick={send} disabled={!canSend} aria-label="Send (Enter)" title="Send (Enter)">
-            <ArrowUp />
-          </Button>
+          <button type="button" onClick={send} disabled={!canSend} className="min-h-12 shrink-0 rounded-full bg-text px-5 text-[14px] font-semibold text-surface disabled:opacity-45" title="Send (Enter)" aria-label="Send (Enter)">
+            Ask
+          </button>
         )}
       </div>
-      <div className="flex items-center justify-between px-2 text-[12px] text-text-dim">
-        <span className="hidden sm:inline">Enter to send · Shift+Enter for a new line{streaming ? " · Escape to stop" : ""}</span>
-        <span className="sm:hidden" />
+      <div className="mt-2.5 flex items-center justify-between gap-2 text-[11.5px] leading-[1.45] text-text-dim">
+        <span>Enter sends · Shift+Enter new line{streaming ? " · Escape stops" : ""}</span>
         <fieldset className="flex items-center gap-1" aria-label="Answer mode">
           {(["agent", "baseline"] as const).map((m) => (
-            <label key={m} className={`cursor-pointer rounded-full px-2.5 py-1 ${mode === m ? "bg-text text-surface" : "hover:bg-surface-2"}`}>
+            <label key={m} className={cn("cursor-pointer rounded-full px-2.5 py-1 font-semibold", mode === m ? "bg-text text-surface" : "hover:bg-surface-2")}>
               <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => onModeChange(m)} className="sr-only" />
               {m === "agent" ? "Agent" : "Baseline"}
             </label>

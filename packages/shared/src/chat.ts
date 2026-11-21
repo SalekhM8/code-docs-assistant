@@ -63,6 +63,8 @@ export const LiveStep = z.object({
   label: z.string(),
   /** Filled when the step finishes, e.g. "8 results" or "lines 10-80". */
   detail: z.string().optional(),
+  /** Repo files this step opened or found, so the UI can show where the assistant is looking. */
+  paths: z.array(z.string()).max(20).optional(),
   done: z.boolean(),
 });
 export type LiveStep = z.infer<typeof LiveStep>;

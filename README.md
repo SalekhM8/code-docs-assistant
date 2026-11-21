@@ -1,12 +1,14 @@
 # Code Docs Assistant
 
-Index a public GitHub repo, then ask questions about its code. Answers stream in with `[path:start-end]` citations that are checked in code, and each citation opens the exact lines beside the chat. Every answer stores a trace of what was searched and read, with tokens, cost and time.
+Index a public GitHub repo, then ask questions about its code. Answers stream in with `[path:start-end]` citations that are checked in code, and each citation opens the exact lines over the floor. Every answer stores a trace of what was searched and read, with tokens, cost and time.
+
+The UI is the author's White House: a 3D floor with floating cream panels. Each repo is a room; inside a repo each top-level folder is a room, and the assistant (the worker with the orb over their head) walks to the folder each search or file read touches, live from the stream. Folders the answer cites get the house's green tick.
 
 ![Answer with the cited code open](docs/screenshots/answer-and-code.png)
 
-| Repo overview | Streaming, with live steps | Trace panel | Narrow screen |
-| --- | --- | --- | --- |
-| ![](docs/screenshots/repo-overview.png) | ![](docs/screenshots/streaming.png) | ![](docs/screenshots/trace.png) | ![](docs/screenshots/mobile.png) |
+| Repos as rooms | Repo overview | Streaming: folders searched | Trace panel | Narrow screen |
+| --- | --- | --- | --- | --- |
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/repo-overview.png) | ![](docs/screenshots/streaming.png) | ![](docs/screenshots/trace.png) | ![](docs/screenshots/mobile.png) |
 
 Screenshots were taken with the fake model (no API keys), which only points at the best matches.
 
@@ -173,7 +175,7 @@ Facts from the build:
 - Browser talks to the api directly (CORS) so SSE is never buffered by a proxy; Stop = abort fetch, server sees disconnect, aborts the model call, stores partial answer as stopped.
 - Providers behind interfaces with fakes; one composition root (services/container.ts).
 - Langfuse via its OTLP endpoint (ingestion API is legacy), no SDK.
-- UI tokens from the author's White House app (cream palette, Fraunces/Inter, orb from the room-window glow curves); single theme file; orb is CSS driven by real stream states.
+- UI from the author's White House app: its FloorScene and Person (three.js via react-three-fiber) are reused for a 3D floor where repos and folders are rooms, and its chrome (Places card, status pills, Chief of Staff panel, hint pill) frames the chat. Tokens in a single theme file; the orb is CSS in the panel and a glowing sphere over the assistant, both driven by real stream states.
 -->
 
 ## Engineering standards followed and skipped

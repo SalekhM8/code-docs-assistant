@@ -20,7 +20,7 @@ export function MessageView({ message, conversationId, repoId, isLast, onRegener
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[85%] whitespace-pre-wrap rounded-block bg-text px-4 py-2.5 text-[15px] font-medium text-surface">{message.content}</p>
+        <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-text px-4 py-2.5 text-[15px] font-medium text-surface">{message.content}</p>
       </div>
     );
   }
@@ -47,6 +47,7 @@ export function MessageView({ message, conversationId, repoId, isLast, onRegener
   const invalid = message.citations.filter((c) => !c.valid).length;
   return (
     <article className="space-y-2">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-text-dim">As of {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
       <Markdown text={message.content} repoId={repoId} citations={message.citations} />
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-text-dim">
         {message.status === "stopped" && <span className="rounded-full bg-amber-tint px-2 py-0.5 font-medium text-amber-text">Stopped</span>}
