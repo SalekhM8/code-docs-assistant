@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { usePanels } from "@/components/panels";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { TraceDrawer } from "@/components/trace-drawer";
+import { ApiStatus } from "./api-status";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Loaded on the first citation click, with the syntax highlighter inside it.
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </Sheet>
 
       <main className="flex min-w-0 flex-1 flex-col">
+        <ApiStatus />
         <div className="flex items-center gap-2 border-b-[1.5px] border-line bg-surface px-3 py-2 md:hidden">
           <Button variant="ghost" size="icon-sm" aria-label="Open repos and conversations" onClick={() => setNavOpen(true)}>
             <Menu />

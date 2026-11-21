@@ -14,7 +14,7 @@ export function createProviders(config: Config): Providers {
   const llm: LlmProvider =
     config.LLM_PROVIDER === "anthropic"
       ? new AnthropicProvider({ apiKey: config.ANTHROPIC_API_KEY ?? "", answerModel: config.ANSWER_MODEL, cheapModel: config.CHEAP_MODEL })
-      : new FakeLlm();
+      : new FakeLlm({}, config.FAKE_STREAM_DELAY_MS);
   const embeddings: EmbeddingProvider =
     config.EMBEDDING_PROVIDER === "voyage"
       ? new VoyageEmbeddings({ apiKey: config.VOYAGE_API_KEY ?? "", model: config.EMBEDDING_MODEL })

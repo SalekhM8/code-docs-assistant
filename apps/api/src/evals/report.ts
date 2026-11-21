@@ -25,7 +25,7 @@ export function retrievalTable(rows: RetrievalRow[]): string {
 }
 
 export function answerTable(results: AnswerResult[]): string {
-  const modes = [...new Set(results.map((r) => r.mode))] as AnswerMode[];
+  const modes: AnswerMode[] = [...new Set(results.map((r) => r.mode))];
   return table(
     ["Mode", "File recall", "MRR", "Citation validity", "Correctness (judge)", "Faithfulness (judge)", "Declines unanswerable", "Avg cost", "p50 latency", "p95 latency", "Avg tokens"],
     modes.map((mode) => {

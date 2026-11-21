@@ -22,6 +22,8 @@ const ConfigSchema = z
     EMBEDDING_MODEL: z.string().default("voyage-code-4"),
 
     ANSWER_MODE: z.enum(["baseline", "agent"]).default("agent"),
+    /** Fake model only: pause per streamed word, so key-less demos and the browser test can watch and stop a stream. */
+    FAKE_STREAM_DELAY_MS: z.coerce.number().int().min(0).max(1000).default(0),
 
     GITHUB_TOKEN: z.string().optional(),
     SEED_SAMPLE_REPO: bool.default(false),

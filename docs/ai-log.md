@@ -48,3 +48,8 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - ASSUMED: the code viewer renders the whole file (2,700 lines is fine); shiki is imported on first use, and files over 400k characters stay unhighlighted.
 - ASSUMED: feedback is one rating per trace (a unique index) and can be changed or cleared. Clicking the active thumb clears it.
 - ASSUMED: the trace panel derives "searches made" and "files opened" from the stored trace steps (their inputs and `refs`), so it shows exactly what was recorded, never client-side guesses.
+- ASSUMED: the browser test seeds the real pinned sample repo, so it needs network access to GitHub, the same as the reviewer flow. It uses fake providers, its own database (`E2E_DATABASE_URL`) and ports 8788 and 3100.
+- ASSUMED: `FAKE_STREAM_DELAY_MS` (fake model only) slows the fake stream so Stop can be tested in a browser; it is 0 by default.
+- ASSUMED: request bodies are capped at 64 KB. The answer and add-repo routes are rate limited per client.
+- ASSUMED: after Stop, the web app keeps its optimistic partial answer and re-fetches briefly until the server has saved it, because the server only saves once it notices the closed connection.
+- ASSUMED: `apps/web/AGENTS.md` is written by `next dev` (Next.js 16) and is committed as generated, so the working tree stays clean.

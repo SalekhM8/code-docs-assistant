@@ -1,5 +1,4 @@
 import type { Context, MiddlewareHandler } from "hono";
-import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { z } from "zod";
 import type { ApiErrorBody } from "@cda/shared";
 import { AppError } from "./errors";
@@ -32,7 +31,7 @@ export function errorBody(c: Context<AppEnv>, code: string, message: string): Ap
 
 export function handleError(err: Error, c: Context<AppEnv>): Response {
   if (err instanceof AppError) {
-    return c.json(errorBody(c, err.code, err.message), err.status as ContentfulStatusCode);
+    return c.json(errorBody(c, err.code, err.message), err.status);
   }
   c.get("log").error({ err }, "unhandled error");
   return c.json(errorBody(c, "internal", "Something went wrong on our side. Try again; if it keeps happening, check the api logs for this request id."), 500);
