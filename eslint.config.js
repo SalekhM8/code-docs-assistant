@@ -20,7 +20,11 @@ export default tseslint.config(
   {
     files: ["apps/web/**/*.{ts,tsx}"],
     plugins: { "react-hooks": reactHooks },
-    rules: reactHooks.configs.recommended.rules,
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      // This app does not use the React Compiler; TanStack Virtual is fine without it.
+      "react-hooks/incompatible-library": "off",
+    },
   },
   {
     files: ["apps/api/src/evals/**", "apps/api/src/scripts/**"],

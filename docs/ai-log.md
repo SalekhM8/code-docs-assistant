@@ -38,3 +38,11 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - ASSUMED: text the model writes before tool calls is narration. The client is told to clear it (a `reset` event) so only the final step's text is the answer.
 - CHANGED: the Langfuse export posts OTLP/HTTP JSON to Langfuse's OpenTelemetry endpoint, because Langfuse marks its `/api/public/ingestion` batch API as legacy. It has no SDK dependency and sends ids, names, refs and token counts only. BLOCKED: not run against a live Langfuse project (no keys).
 - BLOCKED: the phase 5 eval comparison (baseline vs agent answer quality) needs real model keys; the runner and table are ready (`pnpm eval`).
+- CHANGED: the UI is a warm light theme, not the dark fallback in section 2. The White House code (the "real source" section 8 asks for) is cream and warm; only its brief describes a dark night scene. All tokens sit in one file (`apps/web/src/app/theme.css`) and can be swapped.
+- CHANGED: no chat component library. The stream carries custom events (steps, orb states, reset, checked citations), and the message list must be virtualised. Libraries checked (assistant-ui, AI Elements, prompt-kit) each assume their own message model or runtime and would have added an adapter layer. The chat is about six small components on top of shadcn/ui primitives.
+- ASSUMED: no animation library. Every animation is CSS (the orb, the progress bar, transitions) using the house's easing and durations; the house's `motion` package is not needed for this.
+- ASSUMED: answers use Sans 15px rather than the house's Serif 21px, because code answers are full of lists, identifiers and code. Serif is kept for headlines.
+- ASSUMED: the assistant's colour is the house's Data department blue (`#2f8fe8`). Amber, red and green keep their house meanings only: not found and stopped, failed, done.
+- ASSUMED: destructive actions use an inline "Delete? Yes / No", not a browser dialog.
+- ASSUMED: a question asked on the repo page creates a conversation, navigates to it, and is sent from there (handed over in memory for that one navigation).
+- ASSUMED: the code viewer renders the whole file (2,700 lines is fine); shiki is imported on first use, and files over 400k characters stay unhighlighted.

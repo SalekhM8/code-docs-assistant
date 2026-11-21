@@ -7,6 +7,7 @@ import type { Logger } from "./lib/logger";
 import { healthRoutes } from "./routes/health";
 import { repoRoutes } from "./routes/repos";
 import { conversationRoutes } from "./routes/conversations";
+import { fileRoutes } from "./routes/files";
 import { rateLimit } from "./lib/rate-limit";
 import type { Services } from "./services/container";
 
@@ -29,6 +30,7 @@ export function createApp(deps: AppDeps) {
   const limit = rateLimit(deps.config.RATE_LIMIT_PER_MINUTE);
   app.post("/repos", limit);
   app.route("/", repoRoutes(deps.services.repos));
+  app.route("/", fileRoutes(deps.services.files));
   app.route("/", conversationRoutes({ conversations: deps.services.conversations, answers: deps.services.answers, answerLimit: limit }));
   return app;
 }

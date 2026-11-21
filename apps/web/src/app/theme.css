@@ -1,0 +1,135 @@
+/*
+ * The only file with design values. Taken from the author's White House app
+ * (house UI in palmer-clone/src/components/house3d; see docs/design-tokens.md for each source line).
+ * Amber, red and green keep one meaning each: needs you, failed, done.
+ */
+:root {
+  /* Surfaces and lines */
+  --bg: #f6e7dd;
+  --surface: #faf3ee;
+  --surface-2: #f4e8de;
+  --line: #ecd5c6;
+  --line-strong: #e8c7b5;
+  --scrim: rgba(26, 14, 11, 0.45);
+
+  /* Text */
+  --text: #1a0e0b;
+  --text-2: #4a3b34;
+  --text-dim: #7a6a62;
+  --eyebrow: #b03a2a;
+  --mark: #e55d40;
+
+  /* The assistant's identity colour (the house's Data department blue) */
+  --accent: #2f8fe8;
+  --accent-text: #1b5fa3;
+
+  /* State colours: fill, text on cream, tint panel */
+  --amber: #f5a300;
+  --amber-text: #8a5200;
+  --amber-tint: #fff3d6;
+  --red: #e0352b;
+  --red-text: #a8231b;
+  --red-tint: #fde5e2;
+  --green: #27a567;
+  --green-text: #1c7046;
+
+  --orb-core: #10151d;
+
+  /* Shape */
+  --r-card: 22px;
+  --r-block: 16px;
+  --r-item: 12px;
+  --r-label: 14px;
+  --r-code: 5px;
+  --border-w: 1.5px;
+  --shadow-card: 0 1px 0 rgba(26, 14, 11, 0.08), 0 14px 40px rgba(26, 14, 11, 0.16);
+  --shadow-label: 0 2px 0 rgba(26, 14, 11, 0.12);
+
+  /* Motion */
+  --ease-house: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --dur-panel: 0.22s;
+  --dur-fade: 0.16s;
+  --dur-msg: 0.2s;
+
+  /* Type */
+  --font-serif-stack: var(--font-fraunces), Georgia, serif;
+  --font-sans-stack: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono-stack: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* shadcn/ui variables, mapped onto the house tokens */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--text);
+  --primary-foreground: var(--surface);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-dim);
+  --accent-bg: var(--surface-2);
+  --destructive: var(--red);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--text);
+  --radius: 12px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-bg);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-dim: var(--text-dim);
+  --color-eyebrow: var(--eyebrow);
+  --color-mark: var(--mark);
+  --color-brand: var(--accent);
+  --color-brand-text: var(--accent-text);
+  --color-amber: var(--amber);
+  --color-amber-text: var(--amber-text);
+  --color-amber-tint: var(--amber-tint);
+  --color-red: var(--red);
+  --color-red-text: var(--red-text);
+  --color-red-tint: var(--red-tint);
+  --color-green: var(--green);
+  --color-green-text: var(--green-text);
+
+  --font-serif: var(--font-serif-stack);
+  --font-sans: var(--font-sans-stack);
+  --font-mono: var(--font-mono-stack);
+
+  --radius-card: var(--r-card);
+  --radius-block: var(--r-block);
+  --radius-item: var(--r-item);
+  --radius-label: var(--r-label);
+  --radius-code: var(--r-code);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: var(--shadow-card);
+  --shadow-label: var(--shadow-label);
+  --ease-house: var(--ease-house);
+}

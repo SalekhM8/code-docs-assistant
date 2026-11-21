@@ -1,0 +1,57 @@
+/*
+ * The assistant's orb. A 2D version of the house's room-window glow (WhiteHouse.tsx:184-195):
+ * --i is the emissive intensity on the house's 0 to 2.4 scale; glow size and brightness follow it.
+ * Each data-state is set from a real stream event; nothing here animates for decoration.
+ */
+@property --i {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.22;
+}
+
+.orb {
+  --c: var(--accent);
+  --i: 0.22;
+  width: var(--orb-size, 28px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  flex: none;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, #fff calc(var(--i) * 25%), var(--c)) 0 18%,
+    var(--c) 55%,
+    color-mix(in srgb, var(--c) 45%, var(--orb-core)) 100%
+  );
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--c) 40%, transparent),
+    0 0 calc(var(--i) * 10px) calc(var(--i) * 2px) color-mix(in srgb, var(--c) 55%, transparent);
+  opacity: calc(0.4 + var(--i) / 4);
+  transition: --i 0.25s var(--ease-house);
+}
+
+.orb[data-state="idle"] { --i: 0.22; }
+/* Working: 1.5 +/- 0.25 at 7 rad/s in the house, a period of about 0.9s. */
+.orb[data-state="searching"] { animation: orb-work 0.9s ease-in-out infinite; }
+/* Reading a file: the same curve at half speed, so search and read look different. */
+.orb[data-state="reading"] { animation: orb-work 1.8s ease-in-out infinite; }
+.orb[data-state="answering"] { --i: 1.5; animation: orb-work 0.9s ease-in-out infinite; }
+/* Done holds a steady green (house: 1.9 for about 2 ticks), then the UI returns it to idle. */
+.orb[data-state="done"] { --c: var(--green); --i: 1.9; }
+/* Failed: the house's square wave between 1.8 and 0.5, period about 0.7s. */
+.orb[data-state="failed"] { --c: var(--red); animation: orb-fail 0.7s steps(1) infinite; }
+
+@keyframes orb-work {
+  0%, 100% { --i: 1.25; }
+  50% { --i: 1.75; }
+}
+@keyframes orb-fail {
+  0% { --i: 1.8; }
+  50% { --i: 0.5; }
+}
+
+/* Unlike the house, reduced motion also stills the orb; each state keeps a distinct fixed glow. */
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none !important; transition: none; }
+  .orb[data-state="searching"], .orb[data-state="reading"] { --i: 1.5; }
+  .orb[data-state="failed"] { --i: 1.8; }
+}
