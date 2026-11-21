@@ -5,16 +5,18 @@ import { RefreshCw } from "lucide-react";
 import type { Message as MessageDto } from "@cda/shared";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "./markdown";
+import { MessageActions } from "./message-actions";
 
 interface Props {
   message: MessageDto;
+  conversationId: string;
   repoId: string;
   isLast: boolean;
   onRegenerate: () => void;
   canRegenerate: boolean;
 }
 
-export function MessageView({ message, repoId, isLast, onRegenerate, canRegenerate }: Props) {
+export function MessageView({ message, conversationId, repoId, isLast, onRegenerate, canRegenerate }: Props) {
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -27,13 +29,18 @@ export function MessageView({ message, repoId, isLast, onRegenerate, canRegenera
       <RefreshCw /> Regenerate
     </Button>
   );
-  if (message.status === "not_found") return <DeadEnd message={message} repoId={repoId} actions={regenerate} />;
+  if (message.status === "not_found") {
+    return <DeadEnd message={message} repoId={repoId} actions={<><MessageActions message={message} conversationId={conversationId} />{regenerate}</>} />;
+  }
   if (message.status === "failed") {
     return (
       <div role="alert" className="space-y-2 rounded-block border-[1.5px] border-red bg-red-tint p-4">
         <p className="text-[14px] font-semibold text-red-text">The answer failed</p>
         <p className="text-[14px] text-text-2">{message.content}</p>
-        {regenerate}
+        <div className="flex items-center gap-3 text-[12.5px] text-text-dim">
+          <MessageActions message={message} conversationId={conversationId} />
+          {regenerate}
+        </div>
       </div>
     );
   }
@@ -49,6 +56,7 @@ export function MessageView({ message, repoId, isLast, onRegenerate, canRegenera
             {invalid > 0 && <span className="font-medium text-red-text"> · {invalid} flagged</span>}
           </span>
         )}
+        <MessageActions message={message} conversationId={conversationId} />
         {regenerate}
       </div>
     </article>

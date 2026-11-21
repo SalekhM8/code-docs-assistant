@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ConversationSummary, RepoSummary } from "@cda/shared";
+import type { ConversationDetail, ConversationSummary, Rating, RepoSummary } from "@cda/shared";
 import { api } from "./api";
 
 export const keys = {
@@ -101,5 +101,26 @@ export function useDeleteConversation(repoId: string) {
     },
     onError: (_e, _id, ctx) => qc.setQueryData(keys.conversations(repoId), ctx?.previous),
     onSettled: () => qc.invalidateQueries({ queryKey: keys.conversations(repoId) }),
+  });
+}
+
+export function useTrace(id: string | null) {
+  return useQuery({ queryKey: keys.trace(id ?? ""), queryFn: () => api.trace(id ?? ""), enabled: Boolean(id) });
+}
+
+/** Optimistic: the thumb fills at once; on error the previous rating comes back. */
+export function useFeedback(conversationId: string) {
+  const qc = useQueryClient();
+  const key = keys.conversation(conversationId);
+  return useMutation({
+    mutationFn: ({ traceId, rating }: { traceId: string; rating: Rating | null }) => api.setFeedback(traceId, rating),
+    onMutate: async ({ traceId, rating }) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ConversationDetail>(key);
+      qc.setQueryData<ConversationDetail>(key, (c) => c && { ...c, messages: c.messages.map((m) => (m.traceId === traceId ? { ...m, feedback: rating } : m)) });
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => qc.setQueryData(key, ctx?.previous),
+    onSettled: (_d, _e, { traceId }) => Promise.all([qc.invalidateQueries({ queryKey: key }), qc.invalidateQueries({ queryKey: keys.trace(traceId) })]),
   });
 }

@@ -14,6 +14,7 @@ import { FileService } from "./files";
 import { IndexRunner } from "./index-runner";
 import { createLangfuseExporter } from "./langfuse";
 import { RepoService } from "./repos";
+import { TraceService } from "./traces";
 
 export type ServiceConfig = Pick<
   Config,
@@ -35,6 +36,7 @@ export interface Services {
   conversations: ConversationService;
   answers: AnswerService;
   files: FileService;
+  traces: TraceService;
 }
 
 /** The one composition root. main.ts passes real clients; tests pass fakes. */
@@ -67,5 +69,5 @@ export async function createServices(deps: ServiceDeps): Promise<Services> {
     limits: { maxSteps: config.MAX_AGENT_STEPS, maxTokens: config.MAX_TOKENS_PER_ANSWER },
     onTrace: createLangfuseExporter({ LANGFUSE_HOST: "https://cloud.langfuse.com", ...config }, db, log),
   });
-  return { runner, repos, conversations, answers, files: new FileService({ db, repos }) };
+  return { runner, repos, conversations, answers, files: new FileService({ db, repos }), traces: new TraceService({ db }) };
 }

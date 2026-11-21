@@ -46,3 +46,5 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - ASSUMED: destructive actions use an inline "Delete? Yes / No", not a browser dialog.
 - ASSUMED: a question asked on the repo page creates a conversation, navigates to it, and is sent from there (handed over in memory for that one navigation).
 - ASSUMED: the code viewer renders the whole file (2,700 lines is fine); shiki is imported on first use, and files over 400k characters stay unhighlighted.
+- ASSUMED: feedback is one rating per trace (a unique index) and can be changed or cleared. Clicking the active thumb clears it.
+- ASSUMED: the trace panel derives "searches made" and "files opened" from the stored trace steps (their inputs and `refs`), so it shows exactly what was recorded, never client-side guesses.

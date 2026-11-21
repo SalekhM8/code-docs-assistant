@@ -1,5 +1,5 @@
 import {
-  ApiErrorBody, ConversationDetail, ConversationList, ConversationSummary, FileContent, FileList, HealthResponse, RepoDetail, RepoList,
+  ApiErrorBody, ConversationDetail, ConversationList, ConversationSummary, FeedbackResponse, FileContent, FileList, HealthResponse, RepoDetail, RepoList, TraceDetail,
   type AnswerMode, type Rating,
 } from "@cda/shared";
 import { z } from "zod";
@@ -56,6 +56,11 @@ export const api = {
   deleteConversation: (id: string) => apiFetch(`/conversations/${id}`, Empty, { method: "DELETE" }),
   files: (repoId: string) => apiFetch(`/repos/${repoId}/files`, FileList),
   file: (repoId: string, path: string) => apiFetch(`/repos/${repoId}/file?path=${encodeURIComponent(path)}`, FileContent),
+  trace: (id: string) => apiFetch(`/traces/${id}`, TraceDetail),
+  setFeedback: (traceId: string, rating: Rating | null) =>
+    rating
+      ? apiFetch(`/traces/${traceId}/feedback`, FeedbackResponse, { method: "PUT", body: JSON.stringify({ rating }) })
+      : apiFetch(`/traces/${traceId}/feedback`, FeedbackResponse, { method: "DELETE" }),
 };
 
 export type AnswerRequest =
