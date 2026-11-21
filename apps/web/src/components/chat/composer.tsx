@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import { ArrowUp, Square } from "lucide-react";
 import type { AnswerMode } from "@cda/shared";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,7 +15,15 @@ interface Props {
   placeholder?: string;
 }
 
-/** The house's ask box: a cream pill and a dark Ask button. Enter sends, Shift+Enter adds a line, Escape stops. */
+const MODES: { value: AnswerMode; label: string; hint: string }[] = [
+  { value: "agent", label: "Agent", hint: "Searches and reads files over several steps" },
+  { value: "baseline", label: "Quick", hint: "One search, one answer" },
+];
+
+/**
+ * One glass capsule: the question grows with what you type, and the send bead sits inside it.
+ * Enter sends, Shift+Enter adds a line, Escape stops.
+ */
 export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy = false, placeholder = "Ask how something in the code works" }: Props) {
   const [text, setText] = useState("");
   const canSend = text.trim().length > 0 && !streaming && !busy;
@@ -37,38 +45,52 @@ export function Composer({ mode, onModeChange, onSend, onStop, streaming, busy =
   };
 
   return (
-    <div>
-      <div className="flex items-end gap-2">
+    <div className="space-y-2.5">
+      <div className="glass glass-field flex items-end gap-2 rounded-[26px] p-1.5 pl-[18px]">
         {/* 16px: anything smaller makes iPhones zoom the page when the box is tapped */}
-        <Textarea
+        <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           aria-label="Question"
           rows={1}
-          className="max-h-40 min-h-12 flex-1 resize-none rounded-[24px] border-[1.5px] border-line-strong bg-surface-2 px-4 py-[11px] text-[16px] leading-[1.45] shadow-none focus-visible:border-text focus-visible:ring-2 focus-visible:ring-text"
+          className="field-sizing-content max-h-40 min-h-10 flex-1 resize-none bg-transparent py-[9px] text-[16px] leading-[1.4] text-text outline-none placeholder:text-text-dim"
         />
         {streaming ? (
-          <button type="button" onClick={onStop} className="min-h-12 shrink-0 rounded-full bg-text px-5 text-[14px] font-semibold text-surface" title="Stop (Escape)" aria-label="Stop the answer (Escape)">
-            Stop
+          <button type="button" onClick={onStop} className="bead grid size-10 shrink-0 place-items-center rounded-full" title="Stop (Escape)" aria-label="Stop the answer (Escape)">
+            <Square className="size-3.5 fill-current" aria-hidden />
           </button>
         ) : (
-          <button type="button" onClick={send} disabled={!canSend} className="min-h-12 shrink-0 rounded-full bg-text px-5 text-[14px] font-semibold text-surface disabled:opacity-45" title="Send (Enter)" aria-label="Send (Enter)">
-            Ask
+          <button type="button" onClick={send} disabled={!canSend} className="bead grid size-10 shrink-0 place-items-center rounded-full" title="Send (Enter)" aria-label="Send (Enter)">
+            <ArrowUp className="size-[18px]" strokeWidth={2.4} aria-hidden />
           </button>
         )}
       </div>
-      <div className="mt-2.5 flex items-center justify-between gap-2 text-[11.5px] leading-[1.45] text-text-dim">
-        <span>Enter sends · Shift+Enter new line{streaming ? " · Escape stops" : ""}</span>
-        <fieldset className="flex items-center gap-1" aria-label="Answer mode">
-          {(["agent", "baseline"] as const).map((m) => (
-            <label key={m} className={cn("cursor-pointer rounded-full px-2.5 py-1 font-semibold", mode === m ? "bg-text text-surface" : "hover:bg-surface-2")}>
-              <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => onModeChange(m)} className="sr-only" />
-              {m === "agent" ? "Agent" : "Baseline"}
+      <div className="flex items-center justify-between gap-3 px-1">
+        <fieldset className="glass relative flex rounded-full p-[3px]" aria-label="Answer mode">
+          <span
+            aria-hidden
+            className="bead absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-full transition-transform duration-200 ease-house"
+            style={{ transform: mode === "agent" ? "translateX(0)" : "translateX(100%)" }}
+          />
+          {MODES.map((m) => (
+            <label
+              key={m.value}
+              title={m.hint}
+              className={cn(
+                "relative z-10 min-w-[68px] cursor-pointer rounded-full px-3 py-1.5 text-center text-[12.5px] font-semibold transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-text",
+                mode === m.value ? "text-surface" : "text-text-2 hover:text-text",
+              )}
+            >
+              <input type="radio" name="mode" value={m.value} checked={mode === m.value} onChange={() => onModeChange(m.value)} className="sr-only" />
+              {m.label}
             </label>
           ))}
         </fieldset>
+        <span className="truncate text-[11.5px] text-text-dim">
+          <kbd className="font-sans">Enter</kbd> to ask{streaming ? " · Esc to stop" : " · ⇧Enter new line"}
+        </span>
       </div>
     </div>
   );

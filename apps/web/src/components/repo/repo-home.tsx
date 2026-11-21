@@ -7,7 +7,7 @@ import type { AnswerMode } from "@cda/shared";
 import { Composer } from "@/components/chat/composer";
 import { Markdown } from "@/components/chat/markdown";
 import { Eyebrow } from "@/components/eyebrow";
-import { ChipButton, PanelHeader } from "@/components/panel-header";
+import { ChipButton, ChipRow, PanelHeader } from "@/components/panel-header";
 import { ConfirmButton } from "@/components/sidebar/confirm-button";
 import { Button } from "@/components/ui/button";
 import { setPendingQuestion } from "@/lib/pending-question";
@@ -40,9 +40,9 @@ export function RepoHome({ repoId }: { repoId: string }) {
       <PanelHeader eyebrow={r.status === "ready" ? `Indexed at ${shortSha(r.commitSha)} · ${r.fileCount} files · ${r.chunkCount} chunks` : r.owner} title={`${r.owner}/${r.name}`}>
         {r.status !== "indexing" && (
           <div className="mt-3 flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={() => reindex.mutate(r.id)} disabled={reindex.isPending} title="Fetch the latest commit and re-index">
-              <RotateCw /> Re-index
-            </Button>
+            <button type="button" className="glass-pill inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold disabled:opacity-50" onClick={() => reindex.mutate(r.id)} disabled={reindex.isPending} title="Fetch the latest commit and re-index">
+              <RotateCw className="size-3.5" aria-hidden /> Re-index
+            </button>
             <ConfirmButton label="Delete repo" confirmLabel="Delete this repo?" onConfirm={() => del.mutate(r.id, { onSuccess: () => router.push("/") })}>
               <Trash2 />
             </ConfirmButton>
@@ -78,15 +78,15 @@ export function RepoHome({ repoId }: { repoId: string }) {
       </div>
 
       {r.status === "ready" && (
-        <div className="border-t-[1.5px] border-line p-4">
+        <div className="p-4 pt-2">
           {r.suggestedQuestions.length > 0 && (
-            <section className="mb-3 flex flex-wrap gap-1.5" aria-label="Suggested questions">
+            <ChipRow>
               {r.suggestedQuestions.slice(0, 4).map((q) => (
                 <ChipButton key={q} onClick={() => ask(q, mode)} disabled={create.isPending}>
                   {q}
                 </ChipButton>
               ))}
-            </section>
+            </ChipRow>
           )}
           <Composer mode={mode} onModeChange={setMode} onSend={ask} streaming={false} onStop={() => undefined} busy={create.isPending} placeholder={`Ask about ${r.name}`} />
           {create.isError && <p role="alert" className="mt-2 text-[13px] text-red-text">{create.error.message}</p>}

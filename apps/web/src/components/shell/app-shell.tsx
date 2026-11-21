@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {wide && <StageHost repoId={repoId} conversationId={conversationId} />}
 
       <div className="pointer-events-none absolute left-0 top-0 z-30 flex w-full flex-col gap-3 p-2 sm:p-3 xl:bottom-0 xl:w-[320px] xl:p-5">
-        <div className="pointer-events-auto flex items-center justify-between gap-3 rounded-card bg-surface px-[18px] py-4 shadow-card">
+        <div className="pointer-events-auto flex items-center justify-between gap-3 glass rounded-card px-[18px] py-4">
           <Link href="/" className="min-w-0 whitespace-nowrap rounded-sm">
             <span className="block font-serif text-[27px] font-light leading-[1.05] tracking-[-0.03em]">
               Ask the code<span className="text-mark">.</span>
@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="mt-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.22em] text-eyebrow">Cited to the line</span>
           </Link>
           {!wide && (
-            <button type="button" onClick={() => setPlacesOpenOn(pathname)} aria-expanded={placesOpen} className="min-h-11 rounded-full border-[1.5px] border-text px-4 text-[14px] font-semibold">
+            <button type="button" onClick={() => setPlacesOpenOn(pathname)} aria-expanded={placesOpen} className="glass-pill min-h-11 rounded-full px-4 text-[14px] font-semibold">
               Places
             </button>
           )}
@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main
         aria-label="Chat"
-        className="absolute inset-x-2 bottom-2 top-[104px] z-30 flex flex-col overflow-hidden rounded-card bg-surface shadow-card sm:inset-x-3 xl:inset-x-auto xl:bottom-5 xl:right-5 xl:top-[84px] xl:w-[420px]"
+        className="absolute inset-x-2 bottom-2 top-[104px] z-30 flex flex-col overflow-hidden rounded-card glass-strong sm:inset-x-3 xl:inset-x-auto xl:bottom-5 xl:right-5 xl:top-[84px] xl:w-[420px]"
       >
         {children}
       </main>

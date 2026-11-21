@@ -58,7 +58,7 @@ export function StageHost({ repoId, conversationId }: { repoId?: string; convers
       </SceneBoundary>
       {!code && (
         <p
-          className="absolute bottom-5 z-20 max-w-[calc(100%-820px)] -translate-x-1/2 rounded-full bg-surface px-5 py-[13px] text-center text-[13.5px] font-medium leading-snug shadow-card"
+          className="absolute bottom-5 z-20 max-w-[calc(100%-820px)] -translate-x-1/2 glass rounded-full px-5 py-[13px] text-center text-[13.5px] font-medium leading-snug "
           style={{ left: `calc(${INSETS.left}px + (100% - ${INSETS.left + INSETS.right}px) / 2)` }}
         >
           {floor.hint}

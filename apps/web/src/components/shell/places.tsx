@@ -16,21 +16,21 @@ import { cn } from "@/lib/utils";
 export function Places({ repoId, conversationId }: { repoId?: string; conversationId?: string }) {
   const repos = useRepos();
   return (
-    <nav aria-label="Repos and conversations" className="flex min-h-0 flex-col overflow-y-auto rounded-card bg-surface p-2.5 shadow-card">
+    <nav aria-label="Repos and conversations" className="flex min-h-0 flex-col overflow-y-auto glass rounded-card p-2.5">
       <p className="px-3 pb-2 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.22em] text-eyebrow">Places</p>
       <PlaceRow href="/" label="All repos" sub="The whole floor" on={!repoId} />
       {repos.isPending && <p className="px-3 py-2 text-[13px] text-text-dim">Loading repos…</p>}
       {repos.isError && <p role="alert" className="px-3 py-2 text-[13px] text-red-text">{repos.error.message}</p>}
       <ul aria-label="Repos">
         {repos.data?.map((repo) => (
-          <li key={repo.id} className="mt-1 border-t-[1.5px] border-line pt-1">
+          <li key={repo.id} className="mt-1 border-t border-white/70 pt-1">
             <PlaceRow href={`/repos/${repo.id}`} label={`${repo.owner}/${repo.name}`} sub={repoSub(repo)} subTone={repo.status === "failed" ? "text-red-text" : undefined} on={repo.id === repoId && !conversationId} current={repo.id === repoId} />
             {repo.id === repoId && <Rooms repo={repo} conversationId={conversationId} />}
           </li>
         ))}
       </ul>
       {repos.data?.length === 0 && <p className="px-3 py-2 text-[13px] text-text-dim">No repos yet. Add one below.</p>}
-      <div className="mt-2 border-t-[1.5px] border-line px-2 pb-2 pt-3">
+      <div className="mt-2 border-t border-white/70 px-2 pb-2 pt-3">
         <AddRepoForm />
       </div>
     </nav>
@@ -48,7 +48,7 @@ function PlaceRow({ href, label, sub, on, current, subTone }: { href: string; la
     <Link
       href={href}
       aria-current={on || current ? "page" : undefined}
-      className={cn("flex min-h-12 items-center justify-between gap-3 rounded-[16px] px-3", on ? "bg-text text-surface" : "text-text hover:bg-surface-2")}
+      className={cn("flex min-h-12 items-center justify-between gap-3 rounded-[16px] px-3", on ? "bead" : "text-text hover:bg-white/50")}
     >
       <span className="min-w-0 truncate font-serif text-[19px] font-light leading-none tracking-[-0.02em]">{label}</span>
       <span className={cn("shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em]", on ? "opacity-70" : (subTone ?? "opacity-70"))}>{sub}</span>
@@ -71,7 +71,7 @@ function Rooms({ repo, conversationId }: { repo: RepoSummary; conversationId?: s
           const on = c.id === conversationId;
           const answering = on && activity.streaming;
           return (
-            <li key={c.id} className={cn("group flex min-h-10 items-center gap-2.5 rounded-xl pl-5 pr-1.5", on ? "bg-line" : "hover:bg-surface-2")}>
+            <li key={c.id} className={cn("group flex min-h-10 items-center gap-2.5 rounded-xl pl-5 pr-1.5", on ? "bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]" : "hover:bg-white/40")}>
               <span className="size-[9px] shrink-0 rounded-full" style={{ background: ROOM_COLORS[i % ROOM_COLORS.length] }} aria-hidden />
               <Link href={`/repos/${repo.id}/c/${c.id}`} aria-current={on ? "page" : undefined} className="min-w-0 flex-1 truncate py-2 text-[13.5px] font-medium text-text">
                 {c.title}
@@ -94,7 +94,7 @@ function Rooms({ repo, conversationId }: { repo: RepoSummary; conversationId?: s
         type="button"
         disabled={repo.status !== "ready" || create.isPending}
         onClick={() => create.mutate(repo.id, { onSuccess: (c) => router.push(`/repos/${repo.id}/c/${c.id}`) })}
-        className="flex min-h-10 w-full items-center gap-2.5 rounded-xl pl-5 pr-3 text-left text-[13.5px] font-medium text-text-2 hover:bg-surface-2 disabled:opacity-50"
+        className="flex min-h-10 w-full items-center gap-2.5 rounded-xl pl-5 pr-3 text-left text-[13.5px] font-medium text-text-2 hover:bg-white/40 disabled:opacity-50"
       >
         <Plus className="size-[13px]" aria-hidden /> New conversation
       </button>

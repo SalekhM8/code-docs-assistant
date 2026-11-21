@@ -25,7 +25,7 @@ export function Home() {
             <ul className="flex flex-wrap gap-2">
               {ready.map((r) => (
                 <li key={r.id}>
-                  <Link href={`/repos/${r.id}`} className="flex min-h-10 items-center gap-2 rounded-full border-[1.5px] border-line-strong px-3.5 text-[13px] font-semibold hover:border-text">
+                  <Link href={`/repos/${r.id}`} className="glass-pill flex min-h-10 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold">
                     <span className="size-[9px] rounded-full bg-green" aria-hidden />
                     Go to {r.owner}/{r.name}
                   </Link>
@@ -35,7 +35,7 @@ export function Home() {
           </section>
         )}
       </div>
-      <p className="border-t-[1.5px] border-line px-6 py-4 text-[11.5px] leading-[1.45] text-text-dim">
+      <p className="px-6 py-4 text-[11.5px] leading-[1.45] text-text-dim">
         The floor is live: rooms work while a repo indexes, and inside a repo the assistant walks to each folder it searches or reads.
       </p>
     </div>
