@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { JOB_STAGES, type JobProgress } from "@cda/shared";
 import {
   type AnyPgColumn,
   customType,
@@ -30,8 +31,6 @@ export const repos = pgTable("repos", {
   url: text("url").notNull(),
   owner: text("owner").notNull(),
   name: text("name").notNull(),
-  /** Set only for the seeded sample repo, so evals always run against the same code. */
-  pinnedCommit: text("pinned_commit"),
   activeVersionId: uuid("active_version_id").references((): AnyPgColumn => indexVersions.id, { onDelete: "set null" }),
   overview: text("overview"),
   suggestedQuestions: jsonb("suggested_questions").$type<string[]>().notNull().default([]),
@@ -89,21 +88,16 @@ export const indexJobs = pgTable("index_jobs", {
   repoId: uuid("repo_id").notNull().references(() => repos.id, { onDelete: "cascade" }),
   kind: text("kind", { enum: ["index", "reindex"] }).notNull(),
   status: text("status", { enum: ["queued", "running", "ready", "failed"] }).notNull().default("queued"),
-  stage: text("stage").notNull().default("queued"),
+  stage: text("stage", { enum: JOB_STAGES }).notNull().default("queued"),
   progress: jsonb("progress").$type<JobProgress>().notNull().default({ filesTotal: 0, filesDone: 0, filesReused: 0, chunks: 0 }),
+  /** A specific commit to index (the seeded sample repo and evals). Null means the default branch head. */
+  requestedCommit: text("requested_commit"),
   commitSha: text("commit_sha"),
   error: text("error"),
   createdAt: createdAt(),
   startedAt: timestamp("started_at", { withTimezone: true }),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
 }, (t) => [index("index_jobs_repo_idx").on(t.repoId, t.createdAt)]);
-
-export interface JobProgress {
-  filesTotal: number;
-  filesDone: number;
-  filesReused: number;
-  chunks: number;
-}
 
 export const conversations = pgTable("conversations", {
   id: id(),

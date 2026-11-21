@@ -1,16 +1,19 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { Db } from "./db/client";
 import type { Config } from "./config";
+import type { Db } from "./db/client";
 import { handleError, requestContext, type AppEnv } from "./lib/http";
 import type { Logger } from "./lib/logger";
 import { healthRoutes } from "./routes/health";
+import { repoRoutes } from "./routes/repos";
+import type { Services } from "./services/container";
 
 export interface AppDeps {
   config: Pick<Config, "CORS_ORIGIN">;
   db: Db;
   log: Logger;
   providerNames: { llm: string; embeddings: string };
+  services: Services;
 }
 
 export function createApp(deps: AppDeps) {
@@ -20,5 +23,6 @@ export function createApp(deps: AppDeps) {
   app.onError(handleError);
   app.notFound((c) => c.json({ error: { code: "not_found", message: "No such endpoint.", requestId: c.get("requestId") } }, 404));
   app.route("/", healthRoutes({ db: deps.db, providers: deps.providerNames }));
+  app.route("/", repoRoutes(deps.services.repos));
   return app;
 }

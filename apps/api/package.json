@@ -16,6 +16,7 @@
     "@anthropic-ai/sdk": "^1.12.0",
     "@cda/shared": "workspace:*",
     "@hono/node-server": "^2.1.11",
+    "@vscode/tree-sitter-wasm": "^0.3.1",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.19",
     "pino": "^10.4.0",
