@@ -54,7 +54,9 @@ function extractJson(text: string): unknown {
 }
 
 export function fallbackOverview(repoName: string, files: SourceFile[]): RepoOverview {
-  const languages = [...new Set(files.map((f) => f.lang.language))].slice(0, 4).join(", ");
+  const counts = new Map<string, number>();
+  files.forEach((f) => counts.set(f.lang.language, (counts.get(f.lang.language) ?? 0) + 1));
+  const languages = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l]) => l).join(", ");
   const topDirs = [...new Set(files.map((f) => f.path.split("/")[0]).filter((d) => d && files.some((f) => f.path.startsWith(`${d}/`))))].slice(0, 5);
   return {
     overview: `${repoName} has ${files.length} indexed files (${languages}). Top-level folders: ${topDirs.map((d) => `\`${d}/\``).join(", ") || "none"}.`,

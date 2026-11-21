@@ -10,6 +10,7 @@ import type { Providers } from "../providers";
 import { createHybridSearch } from "../retrieval/hybrid";
 import { AnswerService } from "./answer";
 import { ConversationService } from "./conversations";
+import { FileService } from "./files";
 import { IndexRunner } from "./index-runner";
 import { createLangfuseExporter } from "./langfuse";
 import { RepoService } from "./repos";
@@ -33,6 +34,7 @@ export interface Services {
   repos: RepoService;
   conversations: ConversationService;
   answers: AnswerService;
+  files: FileService;
 }
 
 /** The one composition root. main.ts passes real clients; tests pass fakes. */
@@ -65,5 +67,5 @@ export async function createServices(deps: ServiceDeps): Promise<Services> {
     limits: { maxSteps: config.MAX_AGENT_STEPS, maxTokens: config.MAX_TOKENS_PER_ANSWER },
     onTrace: createLangfuseExporter({ LANGFUSE_HOST: "https://cloud.langfuse.com", ...config }, db, log),
   });
-  return { runner, repos, conversations, answers };
+  return { runner, repos, conversations, answers, files: new FileService({ db, repos }) };
 }

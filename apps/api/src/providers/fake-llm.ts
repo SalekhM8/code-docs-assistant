@@ -39,7 +39,7 @@ export class FakeLlm implements LlmProvider {
 
   async complete(req: CompleteRequest): Promise<CompleteResult> {
     this.completeRequests.push(req);
-    const text = this.behaviour.complete?.(req) ?? `Summary: ${req.prompt.slice(0, 120)}`;
+    const text = this.behaviour.complete?.(req) ?? (req.prompt.split("\n")[0] ?? "").slice(0, 60);
     return { model: this.modelFor(req.tier), text, usage: fakeUsage(req.system + req.prompt, text) };
   }
 
