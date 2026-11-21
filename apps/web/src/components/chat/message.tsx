@@ -20,7 +20,7 @@ export function MessageView({ message, conversationId, repoId, isLast, onRegener
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-text px-4 py-2.5 text-[15px] font-medium text-surface">{message.content}</p>
+        <p className="max-w-[85%] whitespace-pre-wrap bead rounded-[20px] rounded-br-md px-4 py-2.5 text-[15px] font-medium">{message.content}</p>
       </div>
     );
   }

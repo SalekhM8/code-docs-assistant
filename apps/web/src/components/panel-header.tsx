@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** The top of the house's side panel: terracotta eyebrow, a big Fraunces headline with a coral full stop, then anything else. */
@@ -15,16 +16,27 @@ export function PanelHeader({ eyebrow, title, children, className }: { eyebrow: 
   );
 }
 
-/** The house's ghost pill, used for suggested questions. */
+/** A suggested question: a small glass capsule. */
 export function ChipButton({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="min-h-10 max-w-full rounded-full border-[1.5px] border-line-strong px-3.5 py-2 text-left text-[13px] font-semibold leading-snug text-text hover:border-text disabled:opacity-50"
+      title={typeof children === "string" ? children : undefined}
+      className="glass-pill inline-flex min-h-9 max-w-[260px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-medium text-text disabled:opacity-50"
     >
-      {children}
+      <Sparkles className="size-3.5 shrink-0 text-mark" aria-hidden />
+      <span className="truncate">{children}</span>
     </button>
+  );
+}
+
+/** Suggested questions in one row that scrolls sideways, fading at the edges. */
+export function ChipRow({ children }: { children: ReactNode }) {
+  return (
+    <section aria-label="Suggested questions" className="fade-x -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 py-1">
+      {children}
+    </section>
   );
 }

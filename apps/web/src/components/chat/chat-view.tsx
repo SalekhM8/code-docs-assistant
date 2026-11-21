@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnswerMode } from "@cda/shared";
 import { usePublishActivity } from "@/components/activity";
 import { Orb } from "@/components/orb";
-import { ChipButton, PanelHeader } from "@/components/panel-header";
+import { ChipButton, ChipRow, PanelHeader } from "@/components/panel-header";
 import { useAnswerStream } from "@/hooks/use-answer-stream";
 import type { Activity } from "@/lib/floor";
 import { takePendingQuestion } from "@/lib/pending-question";
@@ -67,15 +67,15 @@ export function ChatView({ repoId, conversationId }: { repoId: string; conversat
       ) : (
         <MessageList rows={rows} followKey={`${messages.length}:${stream.live?.text.length ?? 0}:${stream.live?.steps.length ?? 0}`} />
       )}
-      <div className="border-t-[1.5px] border-line p-4">
+      <div className="p-4 pt-2">
         {suggestions.length > 0 && (
-          <section className="mb-3 flex flex-wrap gap-1.5" aria-label="Suggested questions">
+          <ChipRow>
             {suggestions.map((q) => (
               <ChipButton key={q} onClick={() => stream.ask(q, mode)} disabled={stream.streaming || repo.data?.status !== "ready"}>
                 {q}
               </ChipButton>
             ))}
-          </section>
+          </ChipRow>
         )}
         <Composer mode={mode} onModeChange={setMode} onSend={stream.ask} onStop={stream.stop} streaming={stream.streaming} busy={repo.data?.status !== "ready"} />
       </div>

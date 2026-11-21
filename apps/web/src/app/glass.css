@@ -1,0 +1,84 @@
+/*
+ * Liquid glass, in the house's palette. Every value comes from theme.css.
+ * .glass        a frosted cream surface for panels floating over the floor
+ * .glass-strong the same, more opaque, for surfaces that hold long text
+ * .glass-pill   a pressable glass capsule (chips, secondary buttons)
+ * .bead         the primary action: an ink bead with a lit top edge
+ */
+.glass,
+.glass-strong,
+.glass-pill {
+  background: var(--glass-sheen), var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-edge);
+  border-bottom-color: var(--glass-edge-low);
+  box-shadow: var(--glass-shadow);
+}
+.glass-strong {
+  background: var(--glass-sheen), var(--glass-fill-strong);
+}
+.glass-pill {
+  box-shadow: var(--glass-shadow-sm);
+  transition:
+    background-color var(--dur-fade) var(--ease-house),
+    box-shadow var(--dur-fade) var(--ease-house),
+    transform var(--dur-fade) var(--ease-house);
+}
+.glass-pill:hover:not(:disabled) {
+  background: var(--glass-sheen), var(--glass-fill-hover);
+  box-shadow: var(--glass-shadow);
+}
+.glass-pill:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.glass-pill[aria-pressed="true"] {
+  background: var(--ink-bead);
+  color: var(--surface);
+  box-shadow: var(--ink-bead-shadow);
+}
+
+.bead {
+  background: var(--ink-bead);
+  color: var(--surface);
+  box-shadow: var(--ink-bead-shadow);
+  transition:
+    transform var(--dur-fade) var(--ease-house),
+    box-shadow var(--dur-fade) var(--ease-house),
+    opacity var(--dur-fade) var(--ease-house);
+}
+.bead:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.bead:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.bead:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* The composer's capsule lights its edge in coral while you type. */
+.glass-field:focus-within {
+  border-color: rgba(229, 93, 64, 0.45);
+  box-shadow: var(--glass-shadow), var(--focus-glow);
+}
+
+/* A row that scrolls sideways and fades out at its edges. */
+.fade-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  scrollbar-width: none;
+}
+.fade-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* No backdrop blur: fall back to solid cream so text never sits on an unblurred scene. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-strong,
+  .glass-pill {
+    background: var(--surface);
+  }
+}

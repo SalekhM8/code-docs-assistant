@@ -36,9 +36,9 @@ export function AddRepoForm() {
           placeholder="https://github.com/owner/repo"
           aria-invalid={add.isError}
           aria-describedby={add.isError ? "repo-url-error" : undefined}
-          className="h-10 rounded-full border-[1.5px] border-line-strong bg-surface-2 px-4 text-[14px]"
+          className="glass glass-field h-10 rounded-full px-4 text-[14px] shadow-none focus-visible:ring-0"
         />
-        <Button type="submit" size="icon" className="size-10 shrink-0" disabled={add.isPending || !url.trim()} aria-label="Add repo">
+        <Button type="submit" size="icon" className="bead size-10 shrink-0" disabled={add.isPending || !url.trim()} aria-label="Add repo">
           <Plus />
         </Button>
       </div>
