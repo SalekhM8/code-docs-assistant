@@ -15,4 +15,4 @@ Questions with expected files only. Recall@k: share of expected files among the 
 
 ## Answers, baseline vs agent
 
-Not run: run with --retrieval-only.
+Not run: no ANTHROPIC_API_KEY (LLM_PROVIDER=fake); answer quality needs a real model.
