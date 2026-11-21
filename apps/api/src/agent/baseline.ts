@@ -1,6 +1,7 @@
 import { baselineQuestion } from "../prompts/answer.v1";
 import type { LlmMessage } from "../providers/llm";
 import { formatSearchResults, refOf } from "./context";
+import { uniquePaths } from "./tools";
 import { modelTurn, type RunContext, type RunResult } from "./run-context";
 
 export const BASELINE_TOP_K = 8;
@@ -23,7 +24,7 @@ export async function runBaseline(ctx: RunContext): Promise<RunResult> {
   }));
   ctx.evidence.noteSearch(`Searched for "${ctx.question}"`);
   results.forEach((c) => ctx.evidence.add(c));
-  ctx.onStep({ id: "search-1", kind: "search", label: ctx.question, detail: `${results.length} results`, done: true });
+  ctx.onStep({ id: "search-1", kind: "search", label: ctx.question, detail: `${results.length} results`, paths: uniquePaths(results), done: true });
   if (results.length === 0) return { text: "", model: ctx.llm.modelFor("answer"), stopReason: "no_evidence" };
 
   const turn = await modelTurn(ctx, "answer", {

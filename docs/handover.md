@@ -223,12 +223,19 @@ apps/web/src/components
 - `components/orb.tsx`: the orb with its text label.
 - `components/eyebrow.tsx`: house eyebrow and headline.
 - `components/trace-drawer.tsx`: the trace panel.
-- `components/shell/app-shell.tsx`: three-panel layout, mobile sheets, lazy code panel.
+- `components/shell/app-shell.tsx`: the White House layout: 3D floor behind floating cards, Places, chat panel on the right, code viewer over the floor; narrow-screen sheets.
+- `components/shell/places.tsx`: the house's Places card: repos as floors, conversations as rooms, the add-repo form.
+- `components/shell/top-bar.tsx`: breadcrumb pill, Working/Ready/Failed counts, the dark action pill (Stop answering while streaming).
+- `components/shell/stage-host.tsx`: picks the floor for the page (repos, or a repo's folders) and the hint pill; loads three.js lazily.
+- `components/scene/stage.tsx`: the Canvas, camera framing between the panels, room-label layer.
+- `components/scene/floor-scene.tsx`: rooms, storeys, signs and the walking assistant, adapted from the house's FloorScene.
+- `components/scene/person.tsx`: the house's blocky person, copied.
+- `components/scene/scene-boundary.tsx`: drops the floor quietly without WebGL.
+- `components/activity.tsx`: shares the open conversation's live answer with the floor and the top bar.
+- `components/panel-header.tsx`: the side panel's eyebrow and Fraunces headline, and the ghost-pill chip.
+- `lib/floor.ts`: folders to rooms, room states from steps and citations, where the assistant stands.
 - `components/shell/api-status.tsx`: the api or db down banner.
-- `components/sidebar/sidebar.tsx`: brand, add form, repos, conversations.
 - `components/sidebar/add-repo-form.tsx`: the URL form with its errors.
-- `components/sidebar/repo-list.tsx`: repos with status, progress, re-index and delete.
-- `components/sidebar/conversation-list.tsx`: conversations, new and delete.
 - `components/sidebar/confirm-button.tsx`: inline two-step delete.
 - `components/repo/home.tsx`: the empty state.
 - `components/repo/repo-home.tsx`: overview, suggested questions, failure and retry, composer.

@@ -62,6 +62,8 @@ interface ToolOutput {
 interface PreparedCall {
   kind: StepKind;
   label: string;
+  /** Files the call targets before it runs (a read or a listing); searches find theirs. */
+  paths: string[];
   /** What a dead-end answer lists, e.g. `Searched for "parse"`. */
   searched: string;
   input: Record<string, unknown>;
@@ -76,14 +78,14 @@ export async function executeTool(ctx: RunContext, call: ToolCall, budget: Conte
   if (!prepared) {
     return { toolCallId: call.id, content: `Invalid call to ${call.name}. Check the tool's input schema and try again.`, isError: true };
   }
-  const step: LiveStep = { id: call.id, kind: prepared.kind, label: prepared.label, done: false };
+  const step: LiveStep = { id: call.id, kind: prepared.kind, label: prepared.label, paths: prepared.paths, done: false };
   ctx.onState(prepared.kind === "read" ? "reading" : "searching");
   ctx.onStep(step);
   ctx.evidence.noteSearch(prepared.searched); // noted at call time, so the list follows the model's order
   try {
     const output = await ctx.trace.step("tool", call.name, prepared.input, prepared.run, (o) => ({ refs: o.shown.map(refOf), detail: o.detail }));
     output.shown.forEach((r) => ctx.evidence.add(r));
-    ctx.onStep({ ...step, detail: output.detail, done: true });
+    ctx.onStep({ ...step, detail: output.detail, paths: output.shown.length ? uniquePaths(output.shown) : prepared.paths, done: true });
     return { toolCallId: call.id, content: budget.fit(output.content), isError: false };
   } catch (err) {
     if (ctx.signal.aborted) throw err;
@@ -93,6 +95,11 @@ export async function executeTool(ctx: RunContext, call: ToolCall, budget: Conte
   }
 }
 
+/** Distinct file paths in result order, capped to what a live step carries. */
+export function uniquePaths(chunks: RetrievedChunk[]): string[] {
+  return [...new Set(chunks.map((c) => c.path))].slice(0, 20);
+}
+
 /** Validates the input for the named tool and binds it. Null for an unknown tool or bad input. */
 function prepare(ctx: RunContext, call: ToolCall): PreparedCall | null {
   switch (call.name) {
@@ -100,25 +107,25 @@ function prepare(ctx: RunContext, call: ToolCall): PreparedCall | null {
       const p = Inputs.search_code.safeParse(call.input);
       if (!p.success) return null;
       const { query } = p.data;
-      return { kind: "search", label: query, searched: `Searched for "${query}"`, input: p.data, run: () => searchCode(ctx, query) };
+      return { kind: "search", label: query, paths: [], searched: `Searched for "${query}"`, input: p.data, run: () => searchCode(ctx, query) };
     }
     case "find_symbol": {
       const p = Inputs.find_symbol.safeParse(call.input);
       if (!p.success) return null;
       const { name } = p.data;
-      return { kind: "symbol", label: name, searched: `Looked up symbol "${name}"`, input: p.data, run: () => findSymbol(ctx, name) };
+      return { kind: "symbol", label: name, paths: [], searched: `Looked up symbol "${name}"`, input: p.data, run: () => findSymbol(ctx, name) };
     }
     case "read_file": {
       const p = Inputs.read_file.safeParse(call.input);
       if (!p.success) return null;
       const label = `${normalisePath(p.data.path)}:${p.data.start_line}-${p.data.end_line}`;
-      return { kind: "read", label, searched: `Read ${label}`, input: p.data, run: () => readFile(ctx, p.data) };
+      return { kind: "read", label, paths: [normalisePath(p.data.path)], searched: `Read ${label}`, input: p.data, run: () => readFile(ctx, p.data) };
     }
     case "list_files": {
       const p = Inputs.list_files.safeParse(call.input);
       if (!p.success) return null;
       const label = normalisePath(p.data.path) || "/";
-      return { kind: "list", label, searched: `Listed ${label}`, input: p.data, run: () => listFiles(ctx, p.data.path) };
+      return { kind: "list", label, paths: [normalisePath(p.data.path)], searched: `Listed ${label}`, input: p.data, run: () => listFiles(ctx, p.data.path) };
     }
     default:
       return null;

@@ -6,9 +6,10 @@ test("reviewer journey on the seeded sample repo", async ({ page }) => {
   await page.goto("/");
 
   // Journey 1 (seeded): the sample repo indexes on start and becomes ready.
-  const repoLink = page.getByRole("link", { name: /tj\/commander\.js/ });
+  const places = page.getByRole("navigation", { name: "Repos and conversations" });
+  const repoLink = places.getByRole("link", { name: /tj\/commander\.js/ });
   await expect(repoLink).toBeVisible({ timeout: 60_000 });
-  await expect(repoLink).toContainText(/Ready · \d+ files/, { timeout: 150_000 });
+  await expect(repoLink).toContainText(/\d+ files/, { timeout: 150_000 });
 
   // Journey 2: overview and suggested questions.
   await repoLink.click();
@@ -56,7 +57,7 @@ test("reviewer journey on the seeded sample repo", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Good answer" }).first()).toHaveAttribute("aria-pressed", "true");
 
   // Journey 9: delete the conversation.
-  const conversations = page.getByRole("region", { name: "Conversations" });
+  const conversations = places.getByRole("group", { name: "Conversations" });
   const before = await conversations.getByRole("listitem").count();
   await conversations.getByRole("listitem").first().hover();
   await conversations.getByRole("button", { name: "Delete conversation" }).first().click();

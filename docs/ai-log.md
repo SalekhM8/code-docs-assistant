@@ -53,3 +53,6 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - ASSUMED: request bodies are capped at 64 KB. The answer and add-repo routes are rate limited per client.
 - ASSUMED: after Stop, the web app keeps its optimistic partial answer and re-fetches briefly until the server has saved it, because the server only saves once it notices the closed connection.
 - ASSUMED: `apps/web/AGENTS.md` is written by `next dev` (Next.js 16) and is committed as generated, so the working tree stays clean.
+- CHANGED (after review by the author): the UI now copies the White House's layout and 3D floor, not only its tokens. The house's FloorScene and Person are reused with three.js; repos and top-level folders are rooms, and the assistant walks to the folder each step touches. Live steps now carry the file paths they touched (`LiveStep.paths`, optional) so the floor can follow them.
+- ASSUMED: motion on the floor follows the brief's rule (nothing moves for decoration): idle rooms are still, and the house's always-walking corridor figure is replaced by the assistant, who only moves when the answer does.
+- ASSUMED: more than three rooms stack into two storeys so rooms stay readable between the side panels; six rooms at most per repo, with hidden folders and the smallest folders sharing "Everything else".

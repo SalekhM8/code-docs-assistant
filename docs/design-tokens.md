@@ -77,3 +77,19 @@ Here the orb is CSS. A radial gradient goes from a white highlight, through the 
 | failed | `error` event, or a failed message | red | 1.8 / 0.5 square wave |
 
 A text label is always next to the orb, and the live steps list beside it names each search and file as it happens. Colour and motion are never the only signal (BRIEF.md:418-420).
+
+## The floor (3D)
+
+The house's floor view (`HD/FloorScene.tsx`, `HD/Person.tsx`) is reused through `@react-three/fiber` and `@react-three/drei`, at the house's versions. `Person` is copied as is; the room, its furniture, the wall screen, the tick and exclamation signs, the corridor runner and the lights are adapted in `apps/web/src/components/scene/floor-scene.tsx`.
+
+| House | Here | State it shows |
+| --- | --- | --- |
+| A floor | The home page: one room per repo | Indexing (typing, screen lit), Failed (slumped, red sign), Ready (still) |
+| A floor | Inside a repo: one room per top-level folder (up to six; hidden folders and the rest share "Everything else") | Searched (typing), Reading (front edge pulses), Cited (green tick) |
+| The Chief of Staff | The assistant, coral tie, orb over their head | Walks to the folder of the newest step that touched a file; afterwards stands by the first cited folder |
+| Room-window glow (`HD/WhiteHouse.tsx:184-195`) | The orb over the assistant | Same intensity curves as the CSS orb |
+| Stacked floors | More than three rooms stack into two storeys; the assistant takes the lift | Layout only |
+
+Rules kept: people and screens move only while their room has work in flight (the house's always-walking corridor figure and idle sway are not used); reduced motion stills everything and the assistant moves instantly; the camera eases to its frame without pointer parallax. The floor is framed in the gap between the 320px Places column and the 420px side panel (the house's sizes), loads lazily after the panels, and is dropped below 1280px or if WebGL is unavailable.
+
+The chrome copies `HD/House3D.tsx`: the title card (Fraunces 27px with the coral full stop, terracotta eyebrow), the Places card (Fraunces 19px rows, the selected row in ink, rooms as dot + name + state), the breadcrumb pill, the counts pill (Working / Ready / Failed here, as the house's Working / Needs you / Failed), one dark action pill (Stop answering while an answer streams), the side panel (eyebrow, Fraunces 34px headline, ghost-pill suggestions, cream input with a dark Ask button), "As of" time labels, and the bottom hint pill.
