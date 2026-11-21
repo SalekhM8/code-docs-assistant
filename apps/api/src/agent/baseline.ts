@@ -1,6 +1,6 @@
 import { baselineQuestion } from "../prompts/answer.v1";
 import type { LlmMessage } from "../providers/llm";
-import { formatSearchResults } from "./context";
+import { formatSearchResults, refOf } from "./context";
 import { modelTurn, type RunContext, type RunResult } from "./run-context";
 
 export const BASELINE_TOP_K = 8;
@@ -18,7 +18,8 @@ export async function runBaseline(ctx: RunContext): Promise<RunResult> {
   const query = retrievalQuery(ctx.question, ctx.history);
   ctx.onStep({ id: "search-1", kind: "search", label: ctx.question, done: false });
   const results = await ctx.trace.step("retrieval", "hybrid_search", { query }, () => ctx.search(ctx.versionId, query, BASELINE_TOP_K, ctx.signal), (r) => ({
-    results: r.map((c) => ({ ref: `${c.path}:${c.startLine}-${c.endLine}`, sources: c.sources })),
+    refs: r.map(refOf),
+    sources: r.map((c) => c.sources.join("+")),
   }));
   ctx.evidence.noteSearch(`Searched for "${ctx.question}"`);
   results.forEach((c) => ctx.evidence.add(c));
