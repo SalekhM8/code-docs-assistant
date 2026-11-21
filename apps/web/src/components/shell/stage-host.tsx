@@ -7,7 +7,7 @@ import { useActivity } from "@/components/activity";
 import { usePanels } from "@/components/panels";
 import { SceneBoundary } from "@/components/scene/scene-boundary";
 import type { Insets } from "@/components/scene/stage";
-import { assistantRoom, folderRooms, foldersOf, IDLE_ACTIVITY, repoRooms, type SceneRoom } from "@/lib/floor";
+import { assistantRoom, folderRooms, foldersOf, IDLE_ACTIVITY, isRoleLayout, repoRooms, type SceneRoom } from "@/lib/floor";
 import { useFiles, useRepo, useRepos } from "@/lib/queries";
 
 // three.js loads after the panels, so it never delays the chat or the first streamed words.
@@ -41,7 +41,9 @@ export function StageHost({ repoId, conversationId }: { repoId?: string; convers
     return {
       rooms: folderRooms(folders, live),
       assistant: assistantRoom(folders, live),
-      hint: "Each room is a top-level folder. The assistant walks to what it reads.",
+      hint: isRoleLayout(folders)
+        ? "A flat repo, so each room is a kind of file: source, tests, docs, config. The assistant walks to what it reads."
+        : "Each room is a top-level folder. The assistant walks to what it reads.",
     };
   }, [repoId, repos.data, repo.data, folders, live]);
 

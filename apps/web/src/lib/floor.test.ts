@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LiveStep } from "@cda/shared";
-import { assistantRoom, folderRooms, foldersOf, IDLE_ACTIVITY, MAX_ROOMS, OTHER_ROOM, ROOT_ROOM, roomOfPath } from "./floor";
+import { assistantRoom, folderRooms, foldersOf, IDLE_ACTIVITY, MAX_ROOMS, OTHER_ROOM, ROOT_ROOM, isRoleLayout, roleOf, roomOfPath } from "./floor";
 
 const files = ["README.md", "package.json", "lib/command.js", "lib/option.js", "lib/help.js", "tests/a.test.js", "tests/b.test.js", "typings/index.d.ts"];
 const step = (s: Partial<LiveStep>): LiveStep => ({ id: "1", kind: "search", label: "x", done: true, ...s });
@@ -14,7 +14,7 @@ describe("foldersOf", () => {
 
   it("puts hidden folders with everything else", () => {
     const folders = foldersOf([...files, ".github/workflows/ci.yml"]);
-    expect(folders.at(-1)).toMatchObject({ id: OTHER_ROOM, files: [".github/workflows/ci.yml"] });
+    expect(folders.at(-1)).toMatchObject({ id: OTHER_ROOM, name: ".github/", files: [".github/workflows/ci.yml"] });
     expect(roomOfPath(".github/workflows/ci.yml", folders)).toBe(OTHER_ROOM);
   });
 
@@ -22,8 +22,32 @@ describe("foldersOf", () => {
     const many = Array.from({ length: 10 }, (_, i) => `d${i}/f.js`);
     const folders = foldersOf(many);
     expect(folders).toHaveLength(MAX_ROOMS);
-    expect(folders.at(-1)?.id).toBe(OTHER_ROOM);
+    expect(folders.at(-1)).toMatchObject({ id: OTHER_ROOM, name: "Everything else" });
     expect(roomOfPath("d9/f.js", folders)).toBe(OTHER_ROOM);
+  });
+});
+
+describe("flat repos", () => {
+  // slugify's shape: everything at the root plus .github.
+  const flat = ["index.js", "index.d.ts", "test.js", "readme.md", "license", "package.json", ".editorconfig", ".github/workflows/main.yml", "overridable-replacements.js"];
+
+  it("are grouped by role, in a fixed order", () => {
+    const folders = foldersOf(flat);
+    expect(folders.map((f) => f.name)).toEqual(["Source", "Tests", "Docs", "Config"]);
+    expect(folders.find((f) => f.id === "source")?.files).toEqual(["index.js", "index.d.ts", "overridable-replacements.js"]);
+    expect(roomOfPath(".github/workflows/main.yml", folders)).toBe("config");
+    expect(roomOfPath(".github", folders)).toBe("config");
+    expect(isRoleLayout(folders)).toBe(true);
+    expect(isRoleLayout(foldersOf(files))).toBe(false);
+  });
+
+  it("classify common test, doc and config names", () => {
+    expect(roleOf("src/parse.test.ts")).toBe("tests");
+    expect(roleOf("__tests__/a.js")).toBe("tests");
+    expect(roleOf("CHANGELOG.md")).toBe("docs");
+    expect(roleOf("vite.config.ts")).toBe("config");
+    expect(roleOf("Makefile")).toBe("config");
+    expect(roleOf("lib/command.js")).toBe("source");
   });
 });
 

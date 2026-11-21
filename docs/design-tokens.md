@@ -85,7 +85,7 @@ The house's floor view (`HD/FloorScene.tsx`, `HD/Person.tsx`) is reused through 
 | House | Here | State it shows |
 | --- | --- | --- |
 | A floor | The home page: one room per repo | Indexing (typing, screen lit), Failed (slumped, red sign), Ready (still) |
-| A floor | Inside a repo: one room per top-level folder (up to six; hidden folders and the rest share "Everything else") | Searched (typing), Reading (front edge pulses), Cited (green tick) |
+| A floor | Inside a repo: one room per top-level folder (up to six; hidden folders and the rest share a catch-all, named after its folder when it holds one). Flat repos (under three folders) get one room per role instead: Source, Tests, Docs, Config | Searched (typing), Reading (front edge pulses), Cited (green tick) |
 | The Chief of Staff | The assistant, coral tie, orb over their head | Walks to the folder of the newest step that touched a file; afterwards stands by the first cited folder |
 | Room-window glow (`HD/WhiteHouse.tsx:184-195`) | The orb over the assistant | Same intensity curves as the CSS orb |
 | Stacked floors | More than three rooms stack into two storeys; the assistant takes the lift | Layout only |
