@@ -1,5 +1,5 @@
 {
-  "id": "a0043fb6-060b-425d-adac-797bee3bbf91",
+  "id": "c5e25fa3-4619-4b14-b756-d4c46dc068d4",
   "prevId": "978bc023-ffb5-4adb-a88a-5e23b8a7c21f",
   "version": "7",
   "dialect": "postgresql",
@@ -564,6 +564,12 @@
           "notNull": true,
           "default": "'{\"filesTotal\":0,\"filesDone\":0,\"filesReused\":0,\"chunks\":0}'::jsonb"
         },
+        "requested_commit": {
+          "name": "requested_commit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "commit_sha": {
           "name": "commit_sha",
           "type": "text",
@@ -866,12 +872,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "pinned_commit": {
-          "name": "pinned_commit",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "active_version_id": {
           "name": "active_version_id",
