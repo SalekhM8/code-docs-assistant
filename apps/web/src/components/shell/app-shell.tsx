@@ -1,13 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { usePanels } from "@/components/panels";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { TraceDrawer } from "@/components/trace-drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 // Loaded on the first citation click, with the syntax highlighter inside it.
@@ -22,6 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const wide = useMediaQuery("(min-width: 1024px)");
   // The mobile nav is open for the path it was opened on, so navigating closes it.
   const pathname = usePathname();
+  const { repoId } = useParams<{ repoId?: string }>();
   const [navOpenOn, setNavOpenOn] = useState<string | null>(null);
   const navOpen = navOpenOn === pathname;
   const setNavOpen = (open: boolean) => setNavOpenOn(open ? pathname : null);
@@ -61,6 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SheetContent>
         </Sheet>
       )}
+      <TraceDrawer repoId={repoId} />
     </div>
   );
 }

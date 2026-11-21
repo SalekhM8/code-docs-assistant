@@ -8,6 +8,7 @@ import { healthRoutes } from "./routes/health";
 import { repoRoutes } from "./routes/repos";
 import { conversationRoutes } from "./routes/conversations";
 import { fileRoutes } from "./routes/files";
+import { traceRoutes } from "./routes/traces";
 import { rateLimit } from "./lib/rate-limit";
 import type { Services } from "./services/container";
 
@@ -21,7 +22,7 @@ export interface AppDeps {
 
 export function createApp(deps: AppDeps) {
   const app = new Hono<AppEnv>();
-  app.use("*", cors({ origin: deps.config.CORS_ORIGIN, exposeHeaders: ["x-request-id"] }));
+  app.use("*", cors({ origin: deps.config.CORS_ORIGIN, allowMethods: ["GET", "POST", "PUT", "DELETE"], exposeHeaders: ["x-request-id", "retry-after"] }));
   app.use("*", requestContext(deps.log));
   app.onError(handleError);
   app.notFound((c) => c.json({ error: { code: "not_found", message: "No such endpoint.", requestId: c.get("requestId") } }, 404));
@@ -31,6 +32,7 @@ export function createApp(deps: AppDeps) {
   app.post("/repos", limit);
   app.route("/", repoRoutes(deps.services.repos));
   app.route("/", fileRoutes(deps.services.files));
+  app.route("/", traceRoutes(deps.services.traces));
   app.route("/", conversationRoutes({ conversations: deps.services.conversations, answers: deps.services.answers, answerLimit: limit }));
   return app;
 }

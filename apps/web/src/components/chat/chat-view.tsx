@@ -36,6 +36,7 @@ export function ChatView({ repoId, conversationId }: { repoId: string; conversat
     node: (
       <MessageView
         message={m}
+        conversationId={conversationId}
         repoId={repoId}
         isLast={i === messages.length - 1}
         canRegenerate={!stream.streaming && repo.data?.status === "ready"}
