@@ -31,7 +31,8 @@ export default defineConfig({
         LLM_PROVIDER: "fake",
         EMBEDDING_PROVIDER: "fake",
         SEED_SAMPLE_REPO: "true",
-        FAKE_STREAM_DELAY_MS: "60",
+        // Slow enough that Stop always lands mid-answer, even on a CI runner that renders the 3D floor in software.
+        FAKE_STREAM_DELAY_MS: "200",
         RATE_LIMIT_PER_MINUTE: "1000",
         LOG_LEVEL: "warn",
         // CI runners share addresses, so GitHub's unauthenticated API limit is often already spent there.
