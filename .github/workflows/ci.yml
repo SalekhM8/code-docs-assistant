@@ -65,6 +65,8 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 3s --health-retries 30
     env:
       E2E_DATABASE_URL: postgres://postgres:postgres@localhost:5432/cda_e2e
+      # Raises the GitHub API limit for the public-repo check when the sample repo is seeded.
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
