@@ -34,7 +34,11 @@ export default defineConfig({
         FAKE_STREAM_DELAY_MS: "60",
         RATE_LIMIT_PER_MINUTE: "1000",
         LOG_LEVEL: "warn",
+        // CI runners share addresses, so GitHub's unauthenticated API limit is often already spent there.
+        ...(process.env.GITHUB_TOKEN ? { GITHUB_TOKEN: process.env.GITHUB_TOKEN } : {}),
       },
+      // Warnings from the api (a failed seed, for example) show up in the test output.
+      stdout: "pipe",
     },
     {
       command: `pnpm exec next dev --port ${WEB_PORT}`,
