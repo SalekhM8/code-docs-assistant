@@ -45,10 +45,12 @@ export class AnthropicProvider implements LlmProvider {
   }
 
   async complete(req: CompleteRequest, signal?: AbortSignal): Promise<CompleteResult> {
+    const tier = this.tierParams(req.tier);
     const message = await this.call(() =>
       this.client.beta.messages.create(
         {
-          ...this.tierParams(req.tier),
+          ...tier,
+          ...(req.jsonSchema ? { output_config: { ...tier.output_config, format: { type: "json_schema" as const, schema: req.jsonSchema } } } : {}),
           max_tokens: req.maxTokens,
           system: req.system,
           messages: [{ role: "user", content: req.prompt }],

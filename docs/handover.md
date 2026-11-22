@@ -130,7 +130,7 @@ src/agent
 
 src/prompts
 - `prompts/untrusted.ts`: the rule for untrusted repo data, and the `<repo_data>` wrapper.
-- `prompts/answer.v1.ts`: answer rules, the baseline and agent system prompts, `NOT_FOUND`.
+- `prompts/answer.v2.ts`: answer rules, the baseline and agent system prompts, `NOT_FOUND`.
 - `prompts/overview.v1.ts`: the overview prompt.
 - `prompts/conversation.v1.ts`: title and summary prompts.
 - `prompts/judge.v1.ts`: the eval judge prompt.
@@ -284,7 +284,7 @@ apps/web/src/components
 7. **`providers/llm.ts`, `anthropic.ts`, `fake-llm.ts`: provider interfaces.**
    - Everything talks to `LlmProvider` and `EmbeddingProvider`. Tests script the fake turn by turn; key-less runs use its default behaviour.
    - The Anthropic adapter is the only file that knows SDK types: cache breakpoints, strict tools, server-side refusal fallbacks, typed error mapping.
-8. **`prompts/untrusted.ts` and `answer.v1.ts`: prompt injection.**
+8. **`prompts/untrusted.ts` and `answer.v2.ts`: prompt injection.**
    - All repo text (search results, files, README in the overview) is wrapped in `<repo_data>`, with closing tags escaped.
    - Every system prompt says that content is data, never instructions.
    - Tools are read-only, scoped to one version, and path-normalised. Injection cases are in the golden set.

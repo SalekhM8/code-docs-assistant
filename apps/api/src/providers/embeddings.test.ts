@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { AppError } from "../lib/errors";
 import { FakeEmbeddings, VoyageEmbeddings } from "./embeddings";
 
-function fakeFetch(responses: { status: number; body: unknown }[]) {
+function fakeFetch(responses: { status: number; body: unknown; headers?: Record<string, string> }[]) {
   const calls: { body: string }[] = [];
   const impl = (async (_url: string, init: { body: string }) => {
     calls.push({ body: init.body });
     const r = responses.shift() ?? { status: 500, body: {} };
-    return new Response(JSON.stringify(r.body), { status: r.status });
+    return new Response(JSON.stringify(r.body), { status: r.status, headers: "headers" in r ? r.headers : {} });
   }) as unknown as typeof fetch;
   return { impl, calls };
 }
@@ -22,9 +22,20 @@ describe("VoyageEmbeddings", () => {
 
   it("retries rate limits and then gives a clear error", async () => {
     const { impl, calls } = fakeFetch([{ status: 429, body: {} }, { status: 401, body: {} }]);
-    const voyage = new VoyageEmbeddings({ apiKey: "k", model: "m", fetchImpl: impl, maxAttempts: 3 });
+    const voyage = new VoyageEmbeddings({ apiKey: "k", model: "m", fetchImpl: impl, maxAttempts: 3, baseDelayMs: 0 });
     await expect(voyage.embed(["a"], "document")).rejects.toThrow(/VOYAGE_API_KEY/);
     expect(calls).toHaveLength(2);
+  });
+
+  it("waits out a rate limit and then succeeds", async () => {
+    const { impl, calls } = fakeFetch([
+      { status: 429, body: {}, headers: { "retry-after": "0" } },
+      { status: 429, body: {} },
+      { status: 200, body: { data: [{ embedding: [1], index: 0 }] } },
+    ]);
+    const voyage = new VoyageEmbeddings({ apiKey: "k", model: "m", fetchImpl: impl, baseDelayMs: 0 });
+    expect(await voyage.embed(["a"], "document")).toEqual([[1]]);
+    expect(calls).toHaveLength(3);
   });
 
   it("rejects a malformed body", async () => {

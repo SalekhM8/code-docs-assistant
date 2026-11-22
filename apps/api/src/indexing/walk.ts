@@ -56,7 +56,7 @@ export async function walkRepo(root: string, limits: WalkLimits): Promise<WalkRe
     }
     totalBytes += stat.size;
     if (files.length >= limits.maxFileCount || totalBytes > limits.maxTotalBytes) {
-      throw new AppError("repo_too_large", `This repo has more indexable code than the limit (${limits.maxFileCount} files or ${Math.round(limits.maxTotalBytes / 1e6)} MB). Try a smaller repo.`);
+      throw new AppError("repo_too_large", `This repo has more indexable code than the limit (${limits.maxFileCount} files or ${Math.round(limits.maxTotalBytes / (1024 * 1024))} MB). Try a smaller repo.`);
     }
     const content = buffer.toString("utf8");
     files.push({ path: rel, content, sizeBytes: stat.size, lineCount: countLines(content), contentHash: sha256(content), lang });

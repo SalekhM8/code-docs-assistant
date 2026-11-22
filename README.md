@@ -128,19 +128,39 @@ pnpm eval      # golden set: retrieval metrics, plus baseline vs agent answers w
 
 ## Eval results
 
-34 questions on the pinned sample repo, of five types: find, explain, multi-step, unanswerable and prompt injection. The golden set is an unreviewed draft (`apps/api/src/evals/golden-set.json`). The table below was produced without API keys (fake embeddings), so it measures the retrieval plumbing, not Voyage quality:
+34 questions on the pinned sample repo, of five types: find, explain, multi-step, unanswerable and prompt injection. The golden set is an unreviewed draft (`apps/api/src/evals/golden-set.json`). Run on 2026-11-22 with `claude-sonnet-5-5` and `voyage-code-4`; the full output is in `docs/eval-results.md`.
+
+Retrieval:
 
 | Search | Recall@5 | Recall@10 | MRR@10 |
 | --- | --- | --- | --- |
-| vector | 37.2% | 60.6% | 0.282 |
+| vector | 90.0% | 94.4% | 0.950 |
 | keyword | 32.8% | 44.4% | 0.197 |
-| hybrid | 51.1% | 66.1% | 0.344 |
+| hybrid | 80.0% | 91.7% | 0.791 |
 
-The answer-quality comparison (baseline vs agent: citation validity, judged correctness and faithfulness, cost, p50/p95 latency) needs `ANTHROPIC_API_KEY` and `VOYAGE_API_KEY`. Run `pnpm eval` with keys to fill in `docs/eval-results.md`.
+Hybrid is still below vector search alone on this set. With equal weights it was worse (86.7%, MRR 0.655), because keyword search is weak on natural-language questions; keyword results are now weighted 0.3 in the fusion. See "Known gaps".
+
+Answers, one search (baseline, "Quick" in the UI) against the agent:
+
+| Mode | File recall | Citation validity | Correctness (judge) | Faithfulness (judge) | Declines unanswerable | Avg cost | p50 latency | p95 latency |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| agent | 95.6% | 100.0% | 84.2% | 91.3% | 4/4 | $0.0258 | 7.4s | 10.8s |
+| baseline | 90.0% | 100.0% | 79.2% | 88.2% | 4/4 | $0.0264 | 6.3s | 11.3s |
+
+Correctness is the share of key facts present and faithfulness the share of claims backed by the cited code, both judged by the answer model. All three prompt-injection questions were answered from the code, ignoring the injected text.
+
+A stress test with real keys (25 repos, about 110 questions, plus URL, API, lifecycle and concurrency checks) is written up in `docs/stress-test-findings.md`, with what broke, what was fixed and what held up.
 
 ## Known gaps and unhandled edge cases
 
-- **Not run against real providers.** No keys were available while building, so Claude, Voyage and Langfuse were never called. Their clients follow the current SDK and API docs, and answer quality, prompt-cache hit rates and costs are unmeasured.
+- **Hybrid search does not beat vector search on the golden set** (Recall@10 91.7% against 94.4%). The keyword weight (0.3) was chosen on the same 34 questions it is measured on, so it may be over-fitted; a keyword-only hit can no longer outrank a vector hit.
+- **Secrets hardcoded in ordinary source files are indexed and can be quoted.** Files are skipped by name (`.env`, key files, credentials) and by a few known key patterns, not by a general secret scanner.
+- **No staleness check.** The assistant knows which commit it reads, but nothing checks GitHub for newer commits; the user re-indexes by hand. Citations in old messages are not re-checked after a re-index.
+- **Unsupported file types are skipped silently** (notebooks, `*.gitignore` templates and other extensions not in `indexing/languages.ts`), and the assistant is not told what was skipped.
+- **No whole-repo facts.** There is no tool for "how many files" or "list every function"; the assistant says it cannot answer.
+- **Agent cost varies.** Typical answers cost $0.01 to $0.03; one eight-tool-call answer in the stress test cost $0.19. When the server-side fallback model answers, the trace has no cost.
+- Langfuse export was never run against a live project.
+- A temp clone folder can be left behind if the api is killed mid-index.
 - **Docker untested here.** `docker compose up` and the Testcontainers path were written but could not be run on the build machine (the Docker daemon would not start). Tests ran against a local Postgres 18 + pgvector 0.8.7.
 - **Indexing jobs live in the api process.** A restart marks running jobs failed (the user can retry), and there is no cross-instance coordination.
 - The rate limiter is in memory and per process, keyed by client address (behind a proxy everyone shares one key).
@@ -157,12 +177,12 @@ Facts from the build:
 - Chunking: tree-sitter (@vscode/tree-sitter-wasm, 15 grammars), one chunk per function/class/method, classes over 150 lines split by member as Class.method, leading doc comments attached; markdown by heading; 60-line windows with 10 overlap otherwise. Chunk text embedded with "path: ... / symbol: ..." prefix.
 - Embeddings: voyage-code-4, 1024 dims, input_type document/query; cache keyed by sha256(embedded text) + model.
 - Retrieval: pgvector HNSW cosine (iterative_scan = relaxed_order so the per-version filter cannot starve results) + Postgres FTS ('simple' config, identifiers split into words, path/symbol weighted A over body D, ts_rank_cd normalisation 1), fused with RRF k=60, 30 candidates each.
-- Measured with fake embeddings: hybrid beats either alone (R@10 66.1% vs 60.6% vector, 44.4% keyword); weighting path/symbol raised keyword R@5 24.4% -> 32.8% and hybrid MRR .328 -> .344.
+- Measured with voyage-code-4: vector R@10 94.4%, keyword 44.4%, hybrid 86.7% with equal weights and 91.7% with keyword weight 0.3 (the setting kept). With fake embeddings hybrid beat either alone (66.1% vs 60.6% / 44.4%), which is why the weakness only showed with real keys.
 - Two modes kept: baseline (one search, top 8) and agent (4 read-only tools, 6 steps, last step tool_choice none, token cap, append-only tool-output budget 140k chars).
 - Models: Sonnet 5.5 effort medium for answers with server-side refusal fallbacks; Haiku 5.5 effort low for overview/title/summary; thinking left adaptive.
-- Prompts versioned (answer.v1, overview.v1, conversation.v1, judge.v1); fixed rules + overview cached; repo text wrapped in <repo_data> and labelled untrusted.
-- Citation checker in code: file exists in version, range in bounds, overlaps evidence retrieved in this run; zero valid citations or NOT_FOUND => stored as not_found with searches listed.
-- Conversation memory: last 6 turns in full, older folded into a rolling summary by the cheap model after answers.
+- Prompts versioned (answer.v2, overview.v1, conversation.v1, judge.v1); fixed rules + overview cached; repo text wrapped in <repo_data> and labelled untrusted.
+- Citation checker in code: file exists in version, range in bounds, overlaps evidence retrieved in this run or cited in a recent answer; paths may contain spaces and [brackets]; a shortened path is expanded when unambiguous; zero valid citations or NOT_FOUND => stored as not_found with searches listed.
+- Conversation memory: last 6 question/answer pairs in full (a stopped or failed answer drops its question), valid citations from those answers count as evidence for follow-ups, older folded into a rolling summary by the cheap model after answers.
 -->
 
 ## Key technical decisions

@@ -3,13 +3,15 @@ import type { RetrievedChunk, ScoredChunk } from "./types";
 export interface RankedList {
   source: ScoredChunk["sources"][number];
   chunks: RetrievedChunk[];
+  /** Scales this list's contribution. Defaults to 1. */
+  weight?: number;
 }
 
 /** The standard RRF constant: damps the gap between rank 1 and rank 2 so one list cannot dominate. */
 export const RRF_K = 60;
 
 /**
- * Reciprocal rank fusion: score = sum over lists of 1 / (k + rank). Uses ranks only, so
+ * Reciprocal rank fusion: score = sum over lists of weight / (k + rank). Uses ranks only, so
  * cosine distances and ts_rank scores never need to be put on the same scale.
  */
 export function reciprocalRankFusion(lists: RankedList[], limit: number, k = RRF_K): ScoredChunk[] {
@@ -17,7 +19,7 @@ export function reciprocalRankFusion(lists: RankedList[], limit: number, k = RRF
   for (const list of lists) {
     list.chunks.forEach((chunk, index) => {
       const existing = merged.get(chunk.id);
-      const contribution = 1 / (k + index + 1);
+      const contribution = (list.weight ?? 1) / (k + index + 1);
       if (existing) {
         existing.score += contribution;
         if (!existing.sources.includes(list.source)) existing.sources.push(list.source);

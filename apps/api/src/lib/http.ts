@@ -40,6 +40,7 @@ export function handleError(err: Error, c: Context<AppEnv>): Response {
 /** Parses a JSON body with zod and turns failures into a 400 the UI can show. */
 export async function parseJson<T extends z.ZodType>(c: Context<AppEnv>, schema: T): Promise<z.infer<T>> {
   const raw: unknown = await c.req.json().catch(() => undefined);
+  if (raw === undefined) throw new AppError("invalid_request", "The request body must be JSON.");
   const result = schema.safeParse(raw);
   if (!result.success) {
     const detail = result.error.issues.map((i) => `${i.path.join(".") || "body"}: ${i.message}`).join("; ");

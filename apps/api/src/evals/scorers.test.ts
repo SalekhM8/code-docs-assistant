@@ -1,3 +1,4 @@
+import { trimKeys } from "./judge";
 import { describe, expect, it } from "vitest";
 import { citationValidity, mean, percentile, rankedFiles, recallAtK, reciprocalRank } from "./scorers";
 
@@ -26,5 +27,11 @@ describe("aggregate helpers", () => {
     expect(citationValidity([])).toBeNull();
     expect(mean([1, null, 0])).toBe(0.5);
     expect(percentile([5, 1, 3, 2, 4], 50)).toBe(3);
+  });
+});
+
+describe("trimKeys", () => {
+  it("trims stray spaces from judge JSON keys, at any depth", () => {
+    expect(trimKeys({ " faithfulness": 0.9, facts: [{ "fact ": "a", present: true }] })).toEqual({ faithfulness: 0.9, facts: [{ fact: "a", present: true }] });
   });
 });

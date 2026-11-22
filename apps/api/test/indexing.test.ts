@@ -127,7 +127,7 @@ describe("indexing a repo", () => {
 
 describe("POST /repos validation", () => {
   it.each([
-    ["http://github.com/a/b"],
+    ["http://github.com.evil.com/a/b"],
     ["https://gitlab.com/a/b"],
     ["https://github.com/a"],
     ["https://user:pw@github.com/a/b"],

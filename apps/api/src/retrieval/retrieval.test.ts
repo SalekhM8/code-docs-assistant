@@ -19,6 +19,12 @@ describe("reciprocalRankFusion", () => {
     expect(fused[0]?.score).toBeCloseTo(1 / (RRF_K + 3) + 1 / (RRF_K + 1));
   });
 
+  it("lets a down-weighted list reorder the other list without outranking it", () => {
+    const vector = { source: "vector" as const, chunks: [chunk("v1"), chunk("v2"), chunk("both")] };
+    const keyword = { source: "keyword" as const, chunks: [chunk("k1"), chunk("both")], weight: 0.3 };
+    expect(reciprocalRankFusion([vector, keyword], 4).map((c) => c.id)).toEqual(["both", "v1", "v2", "k1"]);
+  });
+
   it("respects the limit and handles empty lists", () => {
     expect(reciprocalRankFusion([{ source: "vector", chunks: [chunk("a"), chunk("b")] }, { source: "keyword", chunks: [] }], 1)).toHaveLength(1);
     expect(reciprocalRankFusion([], 5)).toEqual([]);

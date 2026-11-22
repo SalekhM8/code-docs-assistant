@@ -31,8 +31,11 @@ export interface HistoryTurn {
   content: string;
 }
 
-/** Turns of history sent in full; anything older is represented by the rolling summary. */
-export const RECENT_TURNS = 6;
+/**
+ * Messages of history sent in full (six question and answer pairs); anything older is
+ * represented by the rolling summary. Even, so the window never splits a pair.
+ */
+export const RECENT_TURNS = 12;
 
 /** Recent turns in full, older turns as one summary note at the start. */
 export function historyMessages(turns: HistoryTurn[], summary: string | null): LlmMessage[] {

@@ -1,10 +1,12 @@
 import type { Citation, MessageStatus } from "@cda/shared";
-import { NOT_FOUND } from "../prompts/answer.v1";
+import { NOT_FOUND } from "../prompts/answer.v2";
 import type { RunContext, RunResult } from "./run-context";
-import { checkCitations } from "./citations";
+import { checkCitations, expandShortPaths } from "./citations";
 
 export const NO_EVIDENCE_TEXT = "I could not find code in this repository that answers this, so I am not giving an answer.";
-export const UNSUPPORTED_TEXT = "I could not back an answer with valid citations to this repository's code, so none is shown.";
+/** Shown in place of an uncited reply. It also covers requests that are not about the code, so it says what to ask instead. */
+export const UNSUPPORTED_TEXT =
+  "I could not back an answer with citations to this repository's code, so I am not showing one. I can only answer questions about this repo's code: try asking where something is defined or how a feature works.";
 
 export interface FinalAnswer {
   status: MessageStatus;
@@ -21,9 +23,12 @@ export async function finalizeAnswer(ctx: RunContext, result: RunResult): Promis
     return { status: "failed", content: "The model declined to answer this question. Try rephrasing it.", citations: [] };
   }
   if (result.stopReason === "no_evidence") return { status: "not_found", content: NO_EVIDENCE_TEXT, citations: [] };
-  const text = result.text.trim();
+  const text = expandShortPaths(result.text.trim(), ctx.evidence.paths());
   if (text.startsWith(NOT_FOUND)) {
-    return { status: "not_found", content: text.slice(NOT_FOUND.length).trim() || NO_EVIDENCE_TEXT, citations: [] };
+    // The explanation may still point at code ("the closest thing is ..."); those citations are checked like any other.
+    const explanation = text.slice(NOT_FOUND.length).trim();
+    const cited = explanation ? await checkCitations(ctx.db, ctx.versionId, explanation, ctx.evidence) : [];
+    return { status: "not_found", content: explanation || NO_EVIDENCE_TEXT, citations: cited };
   }
   const citations = await checkCitations(ctx.db, ctx.versionId, text, ctx.evidence);
   if (!citations.some((c) => c.valid)) return { status: "not_found", content: UNSUPPORTED_TEXT, citations };

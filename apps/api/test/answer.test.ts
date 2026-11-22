@@ -51,7 +51,7 @@ describe("baseline answers over SSE", () => {
     expect(llm.turnRequests[0]?.system[0]?.cache).toBe(true);
 
     const [trace] = await testDb.db.select().from(traces).where(eq(traces.messageId, message.id));
-    expect(trace).toMatchObject({ mode: "baseline", outcome: "complete", promptVersion: "answer.v1" });
+    expect(trace).toMatchObject({ mode: "baseline", outcome: "complete", promptVersion: "answer.v2" });
     const steps = await testDb.db.select().from(traceSteps).where(eq(traceSteps.traceId, trace?.id ?? ""));
     expect(steps.map((s) => s.kind)).toEqual(["retrieval", "model", "citation_check"]);
 
@@ -77,6 +77,31 @@ describe("baseline answers over SSE", () => {
     expect(message.status).toBe("not_found");
     expect(message.content).toBe("There is no database code in this repo.");
     expect(message.searched).toEqual(['Searched for "Which database does it use?"']);
+  });
+
+  it("keeps checked citations in a not-found explanation", async () => {
+    const { t, conversationId } = await setup(() => ({ text: "NOT_FOUND: Nothing adds matrices. The closest thing is `add` [src/math.ts:3-6]." }));
+    const message = done(await readEvents(await ask(t, conversationId, "How do I add two matrices?")));
+    expect(message.status).toBe("not_found");
+    expect(message.citations).toEqual([{ path: "src/math.ts", startLine: 3, endLine: 6, valid: true }]);
+  });
+
+  it("resolves a shortened path to the one retrieved file it can mean", async () => {
+    const { t, conversationId } = await setup(() => ({ text: "Use `add` [math.ts:3-6]." }));
+    const message = done(await readEvents(await ask(t, conversationId, "How do I add two numbers?")));
+    expect(message.content).toBe("Use `add` [src/math.ts:3-6].");
+    expect(message.citations).toEqual([{ path: "src/math.ts", startLine: 3, endLine: 6, valid: true }]);
+  });
+
+  it("refuses a second question while the first is still being answered", async () => {
+    const { t, conversationId } = await setup(() => ({ text: "Sum [src/math.ts:3-6]" }));
+    const [a, b] = await Promise.all([ask(t, conversationId, "How do I add?"), ask(t, conversationId, "And multiply?")]);
+    expect([a.status, b.status].sort()).toEqual([200, 409]);
+    const busy = a.status === 409 ? a : b;
+    expect((await json<{ error: { code: string } }>(busy)).error.code).toBe("conversation_busy");
+    await readEvents(a.status === 200 ? a : b);
+    // The claim is released when the answer ends.
+    expect((await ask(t, conversationId, "And multiply?")).status).toBe(200);
   });
 
   it("withholds an answer that cites nothing", async () => {

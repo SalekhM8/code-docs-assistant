@@ -7,11 +7,15 @@ describe("parseGitHubUrl", () => {
     ["https://github.com/tj/commander.js", "https://github.com/tj/commander.js"],
     ["https://github.com/tj/commander.js.git", "https://github.com/tj/commander.js"],
     ["  https://github.com/tj/commander.js/tree/master  ", "https://github.com/tj/commander.js"],
+    // The other ways people paste a repo; only the spelling is normalised, the host is still checked.
+    ["github.com/tj/commander.js", "https://github.com/tj/commander.js"],
+    ["http://www.github.com/tj/commander.js", "https://github.com/tj/commander.js"],
+    ["git@github.com:tj/commander.js.git", "https://github.com/tj/commander.js"],
   ])("normalises %s", (input, expected) => {
     expect(parseGitHubUrl(input).url).toBe(expected);
   });
 
-  it.each(["https://github.com/tj", "https://github.com.evil.com/a/b", "https://github.com:8443/a/b", "https://github.com/a/b/settings", "ssh://git@github.com/a/b", "https://github.com/a/.."])(
+  it.each(["https://github.com/tj", "https://github.com.evil.com/a/b", "https://github.com:8443/a/b", "https://github.com/a/b/settings", "ssh://git@github.com/a/b", "git@gitlab.com:a/b.git", "www.github.com.evil.com/a/b", "http://evil.com/github.com/a/b", "https://github.com/a/.."])(
     "rejects %s",
     (input) => {
       expect(() => parseGitHubUrl(input)).toThrow(AppError);

@@ -41,9 +41,13 @@ export function skipByPath(relPath: string, sizeBytes: number, maxBytes: number)
   return null;
 }
 
-/** Decision from the bytes. A NUL byte in the first 8 KB is the same binary test git uses. */
+/**
+ * Decision from the bytes. Git's binary test only looks for a NUL in the first 8 KB; the whole
+ * file is checked here because Postgres text cannot store a NUL at all, and one such file
+ * deep in a test-data folder would otherwise fail the whole index.
+ */
 export function skipByContent(buffer: Buffer): SkipReason | null {
-  if (buffer.subarray(0, 8192).includes(0)) return "binary";
+  if (buffer.includes(0)) return "binary";
   const text = buffer.toString("utf8");
   if (SECRET_CONTENT.some((re) => re.test(text))) return "secret";
   if (looksMinified(text)) return "minified";

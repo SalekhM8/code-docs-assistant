@@ -1,7 +1,7 @@
-import type { Citation } from "@cda/shared";
+import { CITATION_SOURCE, type Citation } from "@cda/shared";
 
-/** Same grammar as the api's citation parser: [path:10-24] or [path:10]. */
-const CITATION = /\[([^\s[\]:]+):(\d+)(?:-(\d+))?\](?!\()/g;
+/** The api's citation grammar, minus anything that is already a markdown link. */
+const CITATION = new RegExp(String.raw`${CITATION_SOURCE}(?!\()`, "g");
 export const CITE_PREFIX = "#cite=";
 
 /**
@@ -13,7 +13,8 @@ export function linkifyCitations(markdown: string): string {
     .split(/(```[\s\S]*?```|`[^`\n]*`)/g)
     .map((part, i) => (i % 2 === 1 ? part : part.replace(CITATION, (_m, path: string, a: string, b?: string) => {
       const range = b ? `${a}-${b}` : a;
-      return `[${path}:${range}](${CITE_PREFIX}${encodeURIComponent(`${path}:${range}`)})`;
+      // Brackets in the path (Next.js routes) are escaped so they stay link text.
+      return `[${path.replace(/[[\]]/g, "\\$&")}:${range}](${CITE_PREFIX}${encodeURIComponent(`${path}:${range}`)})`;
     })))
     .join("");
 }
