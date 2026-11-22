@@ -74,11 +74,12 @@ export class RepoService {
     if (deleted.length === 0) throw notFound("That repo");
   }
 
-  async requireReady(id: string): Promise<{ repo: RepoRow; versionId: string }> {
+  async requireReady(id: string): Promise<{ repo: RepoRow; versionId: string; commitSha: string | null }> {
     const [repo] = await this.deps.db.select().from(repos).where(eq(repos.id, id));
     if (!repo) throw notFound("That repo");
     if (!repo.activeVersionId) throw new AppError("repo_not_ready", "This repo has not finished indexing yet. Wait for it to be ready, then ask again.");
-    return { repo, versionId: repo.activeVersionId };
+    const [version] = await this.deps.db.select({ commitSha: indexVersions.commitSha }).from(indexVersions).where(eq(indexVersions.id, repo.activeVersionId));
+    return { repo, versionId: repo.activeVersionId, commitSha: version?.commitSha ?? null };
   }
 
   private async startJob(repo: RepoRow, kind: "index" | "reindex", commit: string | null): Promise<void> {

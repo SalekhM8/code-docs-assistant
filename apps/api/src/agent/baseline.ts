@@ -1,4 +1,4 @@
-import { baselineQuestion } from "../prompts/answer.v1";
+import { baselineQuestion } from "../prompts/answer.v2";
 import type { LlmMessage } from "../providers/llm";
 import { formatSearchResults, refOf } from "./context";
 import { uniquePaths } from "./tools";

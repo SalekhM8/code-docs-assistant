@@ -41,7 +41,12 @@ interface VoyageOptions {
   model: string;
   fetchImpl?: typeof fetch;
   maxAttempts?: number;
+  /** First retry wait; doubles each attempt. Tests pass 0. */
+  baseDelayMs?: number;
 }
+
+/** Voyage limits are per minute, so retries must be able to span a whole minute. */
+const MAX_RETRY_WAIT_MS = 30_000;
 
 /** Voyage REST client. Kept to one endpoint, so no SDK dependency. */
 export class VoyageEmbeddings implements EmbeddingProvider {
@@ -49,11 +54,13 @@ export class VoyageEmbeddings implements EmbeddingProvider {
   readonly model: string;
   private readonly fetchImpl: typeof fetch;
   private readonly maxAttempts: number;
+  private readonly baseDelayMs: number;
 
   constructor(private readonly options: VoyageOptions) {
     this.model = options.model;
     this.fetchImpl = options.fetchImpl ?? fetch;
-    this.maxAttempts = options.maxAttempts ?? 4;
+    this.maxAttempts = options.maxAttempts ?? 6;
+    this.baseDelayMs = options.baseDelayMs ?? 1000;
   }
 
   async embed(texts: string[], kind: EmbedKind, signal?: AbortSignal): Promise<number[][]> {
@@ -69,9 +76,15 @@ export class VoyageEmbeddings implements EmbeddingProvider {
       if (!retryable || attempt >= this.maxAttempts) {
         throw new AppError("provider_error", `The embedding service returned ${res.status}. Check VOYAGE_API_KEY and your Voyage usage limits, then retry.`);
       }
-      await sleep(500 * 2 ** attempt, signal);
+      await sleep(retryAfterMs(res) ?? Math.min(this.baseDelayMs * 2 ** attempt, MAX_RETRY_WAIT_MS), signal);
     }
   }
+}
+
+/** Honours the server's Retry-After (seconds) when it sends one, capped so a bad value cannot stall indexing. */
+function retryAfterMs(res: Response): number | undefined {
+  const seconds = Number(res.headers.get("retry-after"));
+  return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, 2 * MAX_RETRY_WAIT_MS) : undefined;
 }
 
 const VoyageResponse = z.object({

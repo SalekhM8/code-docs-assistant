@@ -18,6 +18,8 @@ describe("file filter", () => {
 
   it("detects binaries, embedded private keys and minified bundles by content", () => {
     expect(skipByContent(Buffer.from([1, 2, 0, 3]))).toBe("binary");
+    // A NUL far past git's 8 KB sniff window still cannot be stored as Postgres text.
+    expect(skipByContent(Buffer.concat([Buffer.from("plain text line\n".repeat(2000)), Buffer.from([0])]))).toBe("binary");
     expect(skipByContent(Buffer.from("x\n-----BEGIN OPENSSH PRIVATE KEY-----\n"))).toBe("secret");
     expect(skipByContent(Buffer.from(`var a=${"1+".repeat(4000)}1;`))).toBe("minified");
     expect(skipByContent(Buffer.from("export const a = 1;\n"))).toBeNull();

@@ -80,6 +80,8 @@ export interface CompleteRequest {
   system: string;
   prompt: string;
   maxTokens: number;
+  /** When set, the reply is constrained to JSON matching this schema (structured output). */
+  jsonSchema?: Record<string, unknown>;
 }
 
 export interface CompleteResult {

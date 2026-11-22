@@ -42,7 +42,7 @@ const PLAIN: Record<string, string> = {
   ".sql": "sql", ".txt": "text", ".rst": "text", ".kt": "kotlin", ".swift": "swift", ".scala": "scala",
   ".vue": "vue", ".svelte": "svelte", ".xml": "xml", ".gradle": "groovy", ".lua": "lua", ".ex": "elixir",
   ".exs": "elixir", ".erl": "erlang", ".hs": "haskell", ".clj": "clojure", ".dart": "dart", ".r": "r",
-  ".pl": "perl", ".graphql": "graphql", ".proto": "protobuf", ".tf": "terraform", ".dockerfile": "dockerfile",
+  ".pl": "perl", ".graphql": "graphql", ".prisma": "prisma", ".proto": "protobuf", ".tf": "terraform", ".dockerfile": "dockerfile",
 };
 
 const BY_NAME: Record<string, string> = {

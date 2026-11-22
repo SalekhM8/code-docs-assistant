@@ -4,7 +4,7 @@ import { createLangfuseExporter, toOtlp } from "./langfuse";
 
 const trace = {
   id: "11111111-2222-3333-4444-555555555555", messageId: "m", conversationId: "c", mode: "agent" as const, model: "claude-sonnet-5-5",
-  promptVersion: "answer.v1", outcome: "complete", inputTokens: 10, outputTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0,
+  promptVersion: "answer.v2", outcome: "complete", inputTokens: 10, outputTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0,
   costUsd: 0.001, durationMs: 1200, createdAt: new Date("2026-11-21T10:00:00Z"),
 };
 const step = {

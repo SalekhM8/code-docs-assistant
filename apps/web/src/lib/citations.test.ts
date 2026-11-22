@@ -9,6 +9,13 @@ describe("linkifyCitations", () => {
     );
   });
 
+  it("links paths with square brackets and spaces", () => {
+    expect(linkifyCitations("See [app/users/[id]/page.tsx:3-9] and [my notes.md:2].")).toBe(
+      "See [app/users/\\[id\\]/page.tsx:3-9](#cite=app%2Fusers%2F%5Bid%5D%2Fpage.tsx%3A3-9) and [my notes.md:2](#cite=my%20notes.md%3A2).",
+    );
+    expect(parseCiteHref("#cite=app%2Fusers%2F%5Bid%5D%2Fpage.tsx%3A3-9")).toEqual({ path: "app/users/[id]/page.tsx", startLine: 3, endLine: 9 });
+  });
+
   it("leaves existing markdown links alone", () => {
     expect(linkifyCitations("[docs:1](http://x)")).toBe("[docs:1](http://x)");
   });

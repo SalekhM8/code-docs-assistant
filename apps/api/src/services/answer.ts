@@ -8,7 +8,7 @@ import type { Db } from "../db/client";
 import { AppError } from "../lib/errors";
 import type { Logger } from "../lib/logger";
 import type { LlmProvider } from "../providers/llm";
-import { AGENT_SYSTEM, ANSWER_PROMPT_VERSION, BASELINE_SYSTEM, overviewBlock } from "../prompts/answer.v1";
+import { AGENT_SYSTEM, ANSWER_PROMPT_VERSION, BASELINE_SYSTEM, overviewBlock } from "../prompts/answer.v2";
 import type { HybridSearch } from "../retrieval/hybrid";
 import type { ConversationService } from "./conversations";
 import type { RepoService } from "./repos";
@@ -32,26 +32,45 @@ interface AnswerDeps {
 }
 
 export class AnswerService {
+  /** Conversations with an answer in flight. One process, so a Set is enough; see the rate limiter for the same trade-off. */
+  private readonly answering = new Set<string>();
+
   constructor(private readonly deps: AnswerDeps) {}
 
-  /** Checked before a stream opens, so these failures reach the client as plain JSON errors. */
+  /**
+   * Checked before a stream opens, so these failures reach the client as plain JSON errors.
+   * Also claims the conversation: a second question sent while one is being answered would
+   * interleave the stored messages. `ask` and `regenerate` release the claim when they end.
+   */
   async ensureReady(conversationId: string): Promise<void> {
     const conversation = await this.deps.conversations.require(conversationId);
     await this.deps.repos.requireReady(conversation.repoId);
+    if (this.answering.has(conversationId)) {
+      throw new AppError("conversation_busy", "This conversation is still answering the last question. Wait for it to finish, or stop it, then ask again.");
+    }
+    this.answering.add(conversationId);
   }
 
   async ask(conversationId: string, content: string, mode: AnswerMode | undefined, emit: Emit, signal: AbortSignal): Promise<void> {
-    const conversation = await this.deps.conversations.require(conversationId);
-    const ready = await this.deps.repos.requireReady(conversation.repoId);
-    const userMessage = await this.deps.conversations.addUserMessage(conversationId, content);
-    await this.run(conversationId, ready, userMessage, mode ?? this.deps.defaultMode, emit, signal);
+    try {
+      const conversation = await this.deps.conversations.require(conversationId);
+      const ready = await this.deps.repos.requireReady(conversation.repoId);
+      const userMessage = await this.deps.conversations.addUserMessage(conversationId, content);
+      await this.run(conversationId, ready, userMessage, mode ?? this.deps.defaultMode, emit, signal);
+    } finally {
+      this.answering.delete(conversationId);
+    }
   }
 
   async regenerate(conversationId: string, mode: AnswerMode | undefined, emit: Emit, signal: AbortSignal): Promise<void> {
-    const conversation = await this.deps.conversations.require(conversationId);
-    const ready = await this.deps.repos.requireReady(conversation.repoId);
-    const question = await this.deps.conversations.popLastAnswer(conversationId);
-    await this.run(conversationId, ready, question, mode ?? this.deps.defaultMode, emit, signal);
+    try {
+      const conversation = await this.deps.conversations.require(conversationId);
+      const ready = await this.deps.repos.requireReady(conversation.repoId);
+      const question = await this.deps.conversations.popLastAnswer(conversationId);
+      await this.run(conversationId, ready, question, mode ?? this.deps.defaultMode, emit, signal);
+    } finally {
+      this.answering.delete(conversationId);
+    }
   }
 
   private async run(
@@ -66,7 +85,7 @@ export class AnswerService {
     const log = this.deps.log.child({ conversationId, assistantMessageId, mode });
     emit({ type: "start", userMessage: question, assistantMessageId, mode });
 
-    const { turns, summary } = await this.deps.conversations.history(conversationId, question.id);
+    const { turns, summary, priorCitations } = await this.deps.conversations.history(conversationId, question.id);
     let streamed = "";
     const ctx = this.context(ready, question.content, mode, historyMessages(turns, summary), emit, signal, {
       onText: (delta) => {
@@ -78,6 +97,8 @@ export class AnswerService {
         emit({ type: "reset" });
       },
     });
+
+    priorCitations.forEach((c) => ctx.evidence.addPrior(c));
 
     const final = await this.execute(ctx, mode, () => streamed, log);
     const traceId = await this.persist(conversationId, assistantMessageId, final, ctx, mode);
@@ -128,7 +149,7 @@ export class AnswerService {
       // Fixed rules first and cached; the overview is stable per repo, so it is cached too.
       system: [
         { text: mode === "agent" ? AGENT_SYSTEM : BASELINE_SYSTEM, cache: true },
-        { text: overviewBlock(repoName, ready.repo.overview), cache: true },
+        { text: overviewBlock(repoName, ready.repo.overview, ready.commitSha), cache: true },
       ],
       evidence: new Evidence(),
       trace: new TraceRecorder(),

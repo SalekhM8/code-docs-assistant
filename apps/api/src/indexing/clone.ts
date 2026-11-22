@@ -25,8 +25,18 @@ export class GitCloner implements Cloner {
     } else {
       await this.git(["clone", "-q", "--depth", "1", "--single-branch", "--no-tags", url, dir], signal);
     }
-    const { stdout } = await this.git(["-C", dir, "rev-parse", "HEAD"], signal);
-    return stdout.trim();
+    return this.head(dir, signal);
+  }
+
+  /** A repo with no commits clones fine but has no HEAD; that needs its own message, not "cloning failed". */
+  private async head(dir: string, signal?: AbortSignal): Promise<string> {
+    try {
+      const { stdout } = await run("git", [...SAFE, "-C", dir, "rev-parse", "HEAD"], { env: GIT_ENV, timeout: this.timeoutMs, signal });
+      return stdout.trim();
+    } catch (cause) {
+      if (signal?.aborted) throw cause;
+      throw new AppError("invalid_request", "This repo has no commits yet, so there is nothing to index. Push some code to it, then retry.", { cause });
+    }
   }
 
   private async git(args: string[], signal?: AbortSignal) {

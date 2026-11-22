@@ -10,12 +10,24 @@ export interface RepoRef {
 
 const NAME = /^[A-Za-z0-9_.-]{1,100}$/;
 
-/** Accepts only https github.com repo URLs. No other hosts, ports, credentials or sub-paths beyond the repo. */
+/**
+ * The ways people paste a GitHub repo, rewritten to one https form: the SSH clone address,
+ * a link with no scheme, `http://` and `www.`. Only the spelling changes; the host must
+ * still be github.com, and the clone always uses https.
+ */
+function normalise(input: string): string {
+  const text = input.trim();
+  const ssh = /^git@github\.com:([^/\s]+\/[^/\s]+)$/.exec(text);
+  if (ssh) return `https://github.com/${ssh[1]}`;
+  return text.replace(/^(?:https?:\/\/)?(?:www\.)?github\.com\//i, "https://github.com/");
+}
+
+/** Accepts only github.com repo URLs. No other hosts, ports, credentials or sub-paths beyond the repo. */
 export function parseGitHubUrl(input: string): RepoRef {
   const invalid = new AppError("invalid_repo_url", "Paste a public GitHub repo URL like https://github.com/owner/repo.");
   let url: URL;
   try {
-    url = new URL(input.trim());
+    url = new URL(normalise(input));
   } catch {
     throw invalid;
   }

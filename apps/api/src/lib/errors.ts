@@ -9,6 +9,7 @@ export type ErrorCode =
   | "repo_too_large"
   | "repo_busy"
   | "repo_not_ready"
+  | "conversation_busy"
   | "not_found"
   | "rate_limited"
   | "provider_error"
@@ -23,6 +24,7 @@ const STATUS: Record<ErrorCode, Status> = {
   repo_too_large: 413,
   repo_busy: 409,
   repo_not_ready: 409,
+  conversation_busy: 409,
   not_found: 404,
   rate_limited: 429,
   provider_error: 502,

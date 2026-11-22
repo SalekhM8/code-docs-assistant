@@ -49,7 +49,7 @@ export const RepoDetail = RepoSummary.extend({
 });
 export type RepoDetail = z.infer<typeof RepoDetail>;
 
-export const CreateRepoRequest = z.object({ url: z.string().trim().min(1).max(300) });
+export const CreateRepoRequest = z.object({ url: z.string().trim().min(1, "Paste a GitHub repo URL first.").max(300, "That URL is too long to be a GitHub repo.") });
 export type CreateRepoRequest = z.infer<typeof CreateRepoRequest>;
 
 export const RepoList = z.array(RepoSummary);

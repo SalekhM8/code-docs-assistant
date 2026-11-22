@@ -26,16 +26,15 @@ export function createApp(deps: AppDeps) {
   app.use("*", cors({ origin: deps.config.CORS_ORIGIN, allowMethods: ["GET", "POST", "PUT", "DELETE"], exposeHeaders: ["x-request-id", "retry-after"] }));
   app.use("*", requestContext(deps.log));
   // Every request body here is a small JSON object; 64 KB leaves room for a long question.
-  app.use("*", bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: { code: "invalid_request", message: "The request is too large. Shorten the question and try again.", requestId: c.get("requestId") } }, 413) }));
+  app.use("*", bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: { code: "invalid_request", message: "The request is too large. Shorten it and try again.", requestId: c.get("requestId") } }, 413) }));
   app.onError(handleError);
   app.notFound((c) => c.json({ error: { code: "not_found", message: "No such endpoint.", requestId: c.get("requestId") } }, 404));
   app.route("/", healthRoutes({ db: deps.db, providers: deps.providerNames }));
-  // One limiter shared by the two routes that cost money: adding a repo and asking a question.
-  const limit = rateLimit(deps.config.RATE_LIMIT_PER_MINUTE);
-  app.post("/repos", limit);
+  // The two routes that cost money each get their own window, so a burst of questions does not block adding a repo.
+  app.post("/repos", rateLimit(deps.config.RATE_LIMIT_PER_MINUTE));
   app.route("/", repoRoutes(deps.services.repos));
   app.route("/", fileRoutes(deps.services.files));
   app.route("/", traceRoutes(deps.services.traces));
-  app.route("/", conversationRoutes({ conversations: deps.services.conversations, answers: deps.services.answers, answerLimit: limit }));
+  app.route("/", conversationRoutes({ conversations: deps.services.conversations, answers: deps.services.answers, answerLimit: rateLimit(deps.config.RATE_LIMIT_PER_MINUTE) }));
   return app;
 }

@@ -2,6 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import type { ConversationDetail, ConversationSummary, Message } from "@cda/shared";
 import type { Db } from "../db/client";
 import { conversations, feedback, messages, repos, traces, type StoredCitation } from "../db/schema";
+import type { LineRange } from "../agent/evidence";
 import { RECENT_TURNS, type HistoryTurn } from "../agent/context";
 import { AppError, notFound } from "../lib/errors";
 import type { Logger } from "../lib/logger";
@@ -86,14 +87,13 @@ export class ConversationService {
   }
 
   /** Earlier turns for the model, excluding the question being answered now. */
-  async history(conversationId: string, beforeMessageId: string): Promise<{ turns: HistoryTurn[]; summary: string | null }> {
+  async history(conversationId: string, beforeMessageId: string): Promise<{ turns: HistoryTurn[]; summary: string | null; priorCitations: LineRange[] }> {
     const conversation = await this.require(conversationId);
     const all = await this.messages(conversationId);
     const cut = all.findIndex((m) => m.id === beforeMessageId);
-    const turns = (cut >= 0 ? all.slice(0, cut) : all)
-      .filter((m) => m.role === "user" || m.status === "complete")
-      .map((m) => ({ role: m.role, content: m.content }));
-    return { turns, summary: conversation.summary };
+    const answered = answeredTurns(cut >= 0 ? all.slice(0, cut) : all);
+    const priorCitations = answered.slice(-RECENT_TURNS).flatMap((m) => m.citations.filter((c) => c.valid));
+    return { turns: answered.map((m) => ({ role: m.role, content: m.content })), summary: conversation.summary, priorCitations };
   }
 
   /**
@@ -117,7 +117,7 @@ export class ConversationService {
   }
 
   private async updateSummary(conversation: ConversationRow): Promise<void> {
-    const all = (await this.messages(conversation.id)).filter((m) => m.status === "complete" || m.role === "user");
+    const all = answeredTurns(await this.messages(conversation.id));
     const foldUpTo = all.length - RECENT_TURNS;
     if (foldUpTo <= conversation.summaryUpTo) return;
     const fresh = all.slice(conversation.summaryUpTo, foldUpTo).map((m) => `${m.role}: ${m.content}`).join("\n\n");
@@ -129,6 +129,23 @@ export class ConversationService {
   private async touch(conversationId: string): Promise<void> {
     await this.deps.db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
   }
+}
+
+/**
+ * The question and answer pairs the model should see as history: answered or declined ones.
+ * A stopped or failed answer drops its question too, so roles always alternate and a later
+ * turn is never asked to answer an old question again.
+ */
+export function answeredTurns(all: Message[]): Message[] {
+  const out: Message[] = [];
+  for (let i = 0; i + 1 < all.length; i++) {
+    const question = all[i];
+    const answer = all[i + 1];
+    if (question?.role !== "user" || answer?.role !== "assistant") continue;
+    if (answer.status === "complete" || answer.status === "not_found") out.push(question, answer);
+    i++;
+  }
+  return out;
 }
 
 function toSummary(row: ConversationRow): ConversationSummary {
