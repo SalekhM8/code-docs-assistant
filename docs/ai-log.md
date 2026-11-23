@@ -73,3 +73,7 @@ One line per entry. `ASSUMED`: a choice the brief did not cover. `CHANGED`: done
 - CHANGED: one answer at a time per conversation (409 `conversation_busy`), tracked in memory like the rate limiter.
 - CHANGED: `http://`, `www.`, scheme-less and SSH forms of a github.com repo address are accepted and normalised to https. The host check is unchanged.
 - ASSUMED: secrets hardcoded in ordinary source files are still indexed unless they match the known key patterns; left as a known gap.
+
+## Author's manual testing (2026-11-23)
+
+- TESTED (by the author, by hand in the web UI, real models): indexed `SalekhM8/mastore` (608 files) and asked two questions. "which channels does it connect with?" was answered from `src/domain/channels/types.ts`. A three-part follow-up ("what about wix and woo commerce?? also where is the database deployed? also any issues?") came back with 10 of 10 citations valid. It said it found nothing for Wix or WooCommerce, which is right for the indexed commit (`1019eb9`): no indexed file mentions either. It also corrected a detail from its first answer after reading `src/lib/env.ts`. No code changes came out of this session.
